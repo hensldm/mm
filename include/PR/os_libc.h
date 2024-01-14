@@ -9,5 +9,6 @@ int bcmp(void* __s1, void* __s2, int __n);
 void bzero(void* begin, int length);
 
 void osSyncPrintf(const char* fmt, ...);
+void isPrintfInit(void);
 
 #endif
