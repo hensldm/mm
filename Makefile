@@ -42,11 +42,11 @@ VERSION ?= n64-us
 # If COMPARE is 1, check the output md5sum after building
 COMPARE ?= 1
 # If NON_MATCHING is 1, define the NON_MATCHING C flag when building
-NON_MATCHING ?= 0
+NON_MATCHING ?= 1
 # If ORIG_COMPILER is 1, compile with QEMU_IRIX and the original compiler
 ORIG_COMPILER ?= 0
 # If COMPILER is "gcc", compile with GCC instead of IDO.
-COMPILER ?= ido
+COMPILER ?= gcc
 # if WERROR is 1, pass -Werror to CC_CHECK, so warnings would be treated as errors
 WERROR ?= 0
 # Keep .mdebug section in build
@@ -68,6 +68,11 @@ VENV ?= .venv
 PYTHON ?= $(VENV)/$(VENV_BIN_DIR)/python3
 # Emulator w/ flags
 N64_EMULATOR ?=
+# Set to enable debug features regardless of ROM version.
+# Note that by enabling debug features on non-debug ROM versions, some debug ROM specific assets will not be included.
+# This means the debug test scenes and some debug graphics in the elf_msg actors will not work as expected.
+# This may also be used to disable debug features on debug ROMs by setting DEBUG_FEATURES to 0
+DEBUG_FEATURES ?= 1
 
 #### Setup ####
 
@@ -79,8 +84,9 @@ CPPFLAGS :=
 
 ifeq ($(VERSION),n64-jp-1.1)
   COMPARE := 0
+  DEBUG_FEATURES ?= 0
 else ifeq ($(VERSION),n64-us)
-# Intentionally blank for now
+  DEBUG_FEATURES ?= 0
 else
 $(error Unsupported version $(VERSION))
 endif
@@ -95,6 +101,14 @@ ifneq ($(NON_MATCHING),0)
   CFLAGS += -DNON_MATCHING -DAVOID_UB
   CPPFLAGS += -DNON_MATCHING -DAVOID_UB
   COMPARE := 0
+endif
+
+ifneq ($(DEBUG_FEATURES),0)
+  CFLAGS += -DDEBUG_FEATURES=1
+  CPPFLAGS += -DDEBUG_FEATURES=1
+else
+  CFLAGS += -DDEBUG_FEATURES=0
+  CPPFLAGS += -DDEBUG_FEATURES=0
 endif
 
 PROJECT_DIR   := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -226,7 +240,7 @@ ifeq ($(COMPILER),gcc)
   C_DEFINES        := $(COMMON_DEFINES) -D_LANGUAGE_C
   ENDIAN           :=
 
-  OPTFLAGS         := -Os -ffast-math -ftrapping-math -fno-associative-math
+  OPTFLAGS         := -Os -ggdb -ffast-math -ftrapping-math -fno-associative-math
   MIPS_VERSION     := -mips3
 else
   CFLAGS           += -G 0 -non_shared -Xcpluscomm -nostdinc -Wab,-r4300_mul
