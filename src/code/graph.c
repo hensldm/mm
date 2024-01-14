@@ -238,6 +238,16 @@ void Graph_UpdateGame(GameState* gameState) {
     if (SREG(20) < 3) {
         Audio_Update();
     }
+
+    {
+        Input* input = CONTROLLER1(gameState);
+
+        if (CHECK_BTN_ALL(input->cur.button, BTN_L) && CHECK_BTN_ALL(input->press.button, BTN_DUP)) {
+            gSaveContext.gameMode = GAMEMODE_NORMAL;
+            STOP_GAMESTATE(gameState);
+            SET_NEXT_GAMESTATE(gameState, MapSelect_Init, sizeof(MapSelectState));
+        }
+    }
 }
 
 /**

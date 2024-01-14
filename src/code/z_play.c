@@ -33,6 +33,7 @@ u8 sMotionBlurStatus;
 #include "z64visfbuf.h"
 
 #include "overlays/gamestates/ovl_daytelop/z_daytelop.h"
+#include "overlays/gamestates/ovl_select/z_select.h"
 #include "overlays/gamestates/ovl_opening/z_opening.h"
 #include "overlays/gamestates/ovl_file_choose/z_file_select.h"
 #include "libu64/debug.h"
