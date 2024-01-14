@@ -26,5 +26,5 @@ void SaveContext_Init(void) {
 
     gSaveContext.options.language = LANGUAGE_ENG;
     gSaveContext.options.audioSetting = SAVE_AUDIO_STEREO;
-    gSaveContext.options.zTargetSetting = 0;
+    gSaveContext.options.zTargetSetting = 1;
 }
