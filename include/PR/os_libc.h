@@ -14,5 +14,6 @@ void bcopy(const void* __src, void* __dest, int __n);
 #endif
 
 void osSyncPrintf(const char* fmt, ...);
+void isPrintfInit(void);
 
 #endif
