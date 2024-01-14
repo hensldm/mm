@@ -77,7 +77,7 @@
  * The translated strings match the original debug strings, they are only direct translations.
  * For example, any original name is left as is rather than being replaced with the name in the codebase.
  */
-#define T(jp, en) jp
+#define T(jp, en) en
 
 // IDO doesn't support variadic macros, but it merely throws a warning for the
 // number of arguments not matching the definition (warning 609) instead of
