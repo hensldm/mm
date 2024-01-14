@@ -1,6 +1,7 @@
 #include "z_title_setup.h"
 #include "sys_flashrom.h"
 
+#include "overlays/gamestates/ovl_select/z_select.h"
 #include "overlays/gamestates/ovl_title/z_title.h"
 
 void Setup_InitRegs(void) {
@@ -54,8 +55,16 @@ void Setup_InitImpl(SetupState* this) {
     SaveContext_Init();
     Setup_InitRegs();
 
+    gSaveContext.seqId = (u8)NA_BGM_DISABLED;
+    gSaveContext.ambienceId = AMBIENCE_ID_DISABLED;
+    gSaveContext.gameMode = GAMEMODE_NORMAL;
+
+    gSaveContext.flashSaveAvailable = true;
+    Sram_InitSram(&this->state, NULL);
+    gSaveContext.fileNum = 0xFF;
+
     STOP_GAMESTATE(&this->state);
-    SET_NEXT_GAMESTATE(&this->state, ConsoleLogo_Init, sizeof(ConsoleLogoState));
+    SET_NEXT_GAMESTATE(&this->state, MapSelect_Init, sizeof(MapSelectState));
 }
 
 void Setup_Destroy(GameState* thisx) {
