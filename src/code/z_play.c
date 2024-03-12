@@ -36,7 +36,6 @@ u8 sMotionBlurStatus;
 #include "overlays/gamestates/ovl_file_choose/z_file_select.h"
 #include "debug.h"
 
-s32 sPrintFrames = true;
 s32 gDbgCamEnabled = false;
 u8 D_801D0D54 = false;
 
@@ -1061,29 +1060,6 @@ void Play_UpdateMain(PlayState* this) {
 }
 
 void Play_Update(PlayState* this) {
-    {
-        Input* input = CONTROLLER1(&this->state);
-
-        if (CHECK_BTN_ALL(input->cur.button, BTN_R)) {
-            if (CHECK_BTN_ALL(input->press.button, BTN_L)) {
-                sPrintFrames = !sPrintFrames;
-                osSyncPrintf("sPrintFrames: %d\n", sPrintFrames);
-            }
-
-            if (CHECK_BTN_ALL(input->press.button, BTN_CUP)) {
-                gSaveContext.gameMode = GAMEMODE_NORMAL;
-                SET_NEXT_GAMESTATE(&this->state, MapSelect_Init, sizeof(MapSelectState));
-                STOP_GAMESTATE(&this->state);
-            }
-        }
-    }
-
-    if (sPrintFrames) {
-        if (this->gameplayFrames % 100 == 0) {
-            osSyncPrintf("frame: %d\n", this->gameplayFrames);
-        }
-    }
-
     if (!sBombersNotebookOpen) {
         if (this->pauseCtx.bombersNotebookOpen) {
             sBombersNotebookOpen = true;

@@ -235,6 +235,17 @@ void Graph_UpdateGame(GameState* gameState) {
     if (SREG(20) < 3) {
         Audio_Update();
     }
+
+    {
+        Input* input = CONTROLLER1(gameState);
+
+        if (CHECK_BTN_ALL(input->cur.button, BTN_R) &&
+            CHECK_BTN_ALL(input->press.button, BTN_L)) {
+            STOP_GAMESTATE(gameState);
+            SET_NEXT_GAMESTATE(gameState, MapSelect_Init, sizeof(MapSelectState));
+            gameState->running = false;
+        }
+    }
 }
 
 /**
