@@ -7,11 +7,11 @@
 
 #include "stdint.h"
 
-u64* initialgspUcodeText = gspF3DZEX2_NoN_PosLight_fifoTextStart;
-u64* initialgspUcodeData = gspF3DZEX2_NoN_PosLight_fifoDataStart;
+u64* initialgspUcodeText = (u64*)gspF3DZEX2_NoN_PosLight_fifoTextStart;
+u64* initialgspUcodeData = (u64*)gspF3DZEX2_NoN_PosLight_fifoDataStart;
 
 u64* SysUcode_GetUCodeBoot(void) {
-    return rspbootTextStart;
+    return (u64*)rspbootTextStart;
 }
 
 size_t SysUcode_GetUCodeBootSize(void) {

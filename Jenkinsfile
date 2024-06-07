@@ -62,6 +62,16 @@ pipeline {
                 sh 'bash -c "./tools/warnings_count/compare_warnings.sh disasm"'
             }
         }
+        stage('Lib') {
+            steps {
+                sh 'bash -c "make -j lib 2> >(tee tools/warnings_count/warnings_lib_new.txt)"'
+            }
+        }
+        stage('Check lib warnings') {
+            steps {
+                sh 'bash -c "./tools/warnings_count/compare_warnings.sh lib"'
+            }
+        }
         stage('Build') {
             steps {
                 sh 'bash -c "make -j rom 2> >(tee tools/warnings_count/warnings_build_new.txt)"'

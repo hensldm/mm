@@ -2,6 +2,7 @@
 #define Z64MESSAGE_H
 
 #include "PR/ultratypes.h"
+#include "other_types.h"
 #include "stdbool.h"
 
 #include "z64bombers_notebook.h"

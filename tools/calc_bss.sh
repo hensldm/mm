@@ -35,7 +35,8 @@ echo "char measurement;" >> $TEMPC
 $(pwd)/tools/ido_recomp/linux/7.1/cc -G 0 -non_shared \
     -Xfullwarn -Xcpluscomm -O2 -g3 -Xcpluscomm -mips2 \
     -D_LANGUAGE_C -DF3DEX_GBI_2 -DF3DEX_GBI_PL -DGBI_DOWHILE \
-    -I $(pwd)/include/ -I $(pwd)/include/libc/ -I $(pwd)/src/ -I $(pwd)/build/n64-us/ -I $(pwd)/\
+    -DNDEBUG -D_FINALROM -DBUILD_VERSION=VERSION_K \
+    -I $(pwd)/include/ -I $(pwd)/include/libc/ -I $(pwd)/include/libultra -I $(pwd)/lib/ultralib/include -I $(pwd)/src/ -I $(pwd)/build/n64-us/ -I $(pwd)/\
     -Wab,-r4300_mul -woff 624,649,838,712 -c $TEMPC -o $TEMPO
 
 LINE=$(${CROSS}objdump -t $TEMPO | grep measurement | cut -d' ' -f1)

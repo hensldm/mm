@@ -4,7 +4,6 @@
 #include "ultra64.h"
 
 #include "libc64/aprintf.h"
-#include "PR/xstdio.h"
 
 #include "color.h"
 #include "unk.h"

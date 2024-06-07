@@ -15,6 +15,8 @@ src_dir = root_dir / "src"
 CPP_FLAGS = [
     "-Iinclude",
     "-Iinclude/libc",
+    "-Iinclude/libultra",
+    "-Ilib/ultralib/include",
     "-Isrc",
     "-Ibuild/n64-us",
     "-I.",
@@ -22,6 +24,9 @@ CPP_FLAGS = [
     "-DF3DEX_GBI_2",
     "-DF3DEX_GBI_PL",
     "-DGBI_DOWHILE",
+    "-DNDEBUG",
+    "-D_FINALROM",
+    "-DBUILD_VERSION=VERSION_K",
     "-D__sgi",
     "-D_LANGUAGE_C",
     "-DNON_MATCHING",

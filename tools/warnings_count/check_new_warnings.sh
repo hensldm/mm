@@ -55,6 +55,7 @@ do
     make setup
     make assets
     make disasm
+    make lib
     make rom
     make compress"
         ;;
@@ -106,6 +107,7 @@ if [[ $full ]]; then
     make_warnings setup setup
     make_warnings assets assets
     make_warnings disasm disasm
+    make_warnings lib lib
     make_warnings rom build
     make_warnings compress compress
 else
@@ -118,6 +120,7 @@ if [[ $full ]]; then
     $COMPARE_WARNINGS setup
     $COMPARE_WARNINGS assets
     $COMPARE_WARNINGS disasm
+    $COMPARE_WARNINGS lib
     $COMPARE_WARNINGS build
     $COMPARE_WARNINGS compress
 else

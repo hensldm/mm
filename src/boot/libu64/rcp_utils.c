@@ -1,5 +1,7 @@
 #include "ultra64.h"
 
+#include "PR/os_internal_rsp.h"
+
 void RcpUtils_PrintRegisterStatus(void) {
     u32 spStatus = __osSpGetStatus();
     u32 dpStatus = osDpGetStatus();

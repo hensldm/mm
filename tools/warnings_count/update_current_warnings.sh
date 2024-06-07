@@ -10,5 +10,6 @@ make distclean
 make setup 2> tools/warnings_count/warnings_setup_current.txt
 make assets 2> tools/warnings_count/warnings_assets_current.txt
 make disasm 2> tools/warnings_count/warnings_disasm_current.txt
+make lib 2> tools/warnings_count/warnings_lib_current.txt
 make rom 2> tools/warnings_count/warnings_build_current.txt
 make compress 2> tools/warnings_count/warnings_compress_current.txt

@@ -44,7 +44,7 @@
 
 #include "libc64/sleep.h"
 #include "libc64/sprintf.h"
-#include "PR/osint.h"
+#include "PRinternal/osint.h"
 
 #include "controller.h"
 #include "macros.h"

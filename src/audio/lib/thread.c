@@ -168,11 +168,11 @@ AudioTask* AudioThread_UpdateImpl(void) {
     task = &gAudioCtx.curTask->task.t;
     task->type = M_AUDTASK;
     task->flags = 0;
-    task->ucode_boot = aspMainTextStart;
+    task->ucode_boot = (u64*)aspMainTextStart;
     task->ucode_boot_size = SP_UCODE_SIZE;
     task->ucode_data_size = ((aspMainDataEnd - aspMainDataStart) * sizeof(u64)) - 1;
-    task->ucode = aspMainTextStart;
-    task->ucode_data = aspMainDataStart;
+    task->ucode = (u64*)aspMainTextStart;
+    task->ucode_data = (u64*)aspMainDataStart;
     task->ucode_size = SP_UCODE_SIZE;
     task->dram_stack = aspMainStack;
     task->dram_stack_size = 0;

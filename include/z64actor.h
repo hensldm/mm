@@ -2,7 +2,9 @@
 #define Z64ACTOR_H
 
 #include "PR/ultratypes.h"
+#include "other_types.h"
 #include "stdbool.h"
+
 #include "color.h"
 #include "libu64/pad.h"
 #include "z64actor_dlftbls.h"

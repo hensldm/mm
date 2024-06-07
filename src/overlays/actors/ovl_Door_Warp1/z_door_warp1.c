@@ -3,7 +3,7 @@
  * Overlay: ovl_Door_Warp1
  * Description: Blue warp portal and crystal, and the Majora's Mask-shaped boss warp platform
  */
-
+#include "prevent_bss_reordering.h"
 #include "z_door_warp1.h"
 #include "assets/objects/object_warp1/object_warp1.h"
 
