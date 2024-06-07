@@ -12,7 +12,7 @@ u32 sRandInt = 1;
  *
  * Orignal name: __qrand_itemp
  */
-fu gRandFloat;
+FloatInt gRandFloat;
 
 /**
  * Generates the next pseudo-random integer.

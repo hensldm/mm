@@ -2,6 +2,7 @@
 #define Z_FBDEMO_WIPE3_H
 
 #include "ultra64.h"
+#include "other_types.h"
 #include "color.h"
 
 typedef struct {

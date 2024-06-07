@@ -3,6 +3,8 @@
 
 #include "ultra64.h"
 
+#include "other_types.h"
+
 #include "math.h"
 #include "stdarg.h"
 #include "stdbool.h"

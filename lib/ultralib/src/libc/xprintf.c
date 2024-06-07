@@ -32,7 +32,7 @@
 #define PUT(s, n)                                \
     if (0 < (n))                                 \
     {                                            \
-        if ((arg = (*prout)(arg, s, n)) != NULL) \
+        if ((arg = (*pfn)(arg, s, n)) != NULL) \
             x.nchar += (n);                      \
         else                                     \
             return x.nchar;                      \
@@ -42,7 +42,7 @@ static char zeroes[] = "00000000000000000000000000000000";
 
 static void _Putfld(_Pft *pf, va_list *pap, char code, char *ac);
 
-int _Printf(outfun prout, char *arg, const char *fmt, va_list args) {
+int _Printf(void* pfn(void*,const char*,size_t), void *arg, const char *fmt, va_list ap) {
     _Pft x;
     
     x.nchar = 0;
@@ -73,7 +73,7 @@ int _Printf(outfun prout, char *arg, const char *fmt, va_list args) {
         }
 
         if (*s == '*') {
-            x.width = va_arg(args, int);
+            x.width = va_arg(ap, int);
 
             if (x.width < 0) {
                 x.width = -x.width;
@@ -87,7 +87,7 @@ int _Printf(outfun prout, char *arg, const char *fmt, va_list args) {
         if (*s != '.') {
             x.prec = -1;
         } else if (*++s == '*') {
-            x.prec = va_arg(args, int);
+            x.prec = va_arg(ap, int);
             ++s;
         } else 
             for (x.prec = 0; isdigit(*s); s++) { 
@@ -103,7 +103,7 @@ int _Printf(outfun prout, char *arg, const char *fmt, va_list args) {
             ++s;
         }
 
-        _Putfld(&x, &args, *s, ac);
+        _Putfld(&x, &ap, *s, ac);
         x.width -= x.n0 + x.nz0 + x.n1 + x.nz1 + x.n2 + x.nz2;
 
        {

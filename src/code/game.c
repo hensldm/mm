@@ -1,3 +1,4 @@
+#include "prevent_bss_reordering.h"
 #include "z64game.h"
 
 #include "global.h"
