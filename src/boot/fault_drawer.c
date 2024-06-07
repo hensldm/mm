@@ -8,6 +8,8 @@
 #include "fault.h"
 #include "fault_internal.h"
 
+#include "lib/ultralib/src/libc/xstdio.h"
+
 #include "macros.h"
 #include "vt.h"
 

@@ -18,6 +18,11 @@ u32 Rand_Next_Variable(u32* rndNum);
 f32 Rand_ZeroOne_Variable(u32* rndNum);
 f32 Rand_Centered_Variable(u32* rndNum);
 
+typedef union {
+    unsigned int i;
+    float f;
+} fu;
+
 extern fu gRandFloat;
 
 #endif

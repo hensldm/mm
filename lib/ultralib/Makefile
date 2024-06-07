@@ -55,7 +55,7 @@ ifeq ($(findstring _rom,$(TARGET)),_rom)
 CPPFLAGS += -D_FINALROM
 endif
 
-SRC_DIRS := $(shell find src -type d)
+SRC_DIRS := $(shell find src -type d -not -path "src/audio" -not -path "src/sched")
 C_FILES  := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
 S_FILES  := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.s))
 

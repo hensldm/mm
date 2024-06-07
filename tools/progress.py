@@ -228,6 +228,9 @@ for line in map_file:
             elif obj_file.startswith("build/n64-us/src"):
                 if srcCat in srcTracker:
                     srcTracker[srcCat]["totalSize"] += file_size
+            elif obj_file.startswith("build/n64-us/lib"):
+                if srcCat in srcTracker:
+                    srcTracker[srcCat]["totalSize"] += file_size
             elif (obj_file.startswith("build/n64-us/asm")):
                 if srcCat in asmTracker:
                     asmTracker[srcCat]["totalSize"] += file_size

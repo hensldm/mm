@@ -5,7 +5,9 @@
 
 #include "stdarg.h"
 
-int vaprintf(PrintCallback* pfn, const char* fmt, va_list args);
-int aprintf(PrintCallback* pfn, const char* fmt, ...);
+#include "lib/ultralib/src/libc/xstdio.h"
+
+int vaprintf(outfun* pfn, const char* fmt, va_list args);
+int aprintf(outfun* pfn, const char* fmt, ...);
 
 #endif

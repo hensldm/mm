@@ -4,7 +4,6 @@
 #include "ultra64.h"
 
 #include "libc64/aprintf.h"
-#include "PR/xstdio.h"
 
 #include "color.h"
 #include "unk.h"
@@ -21,7 +20,7 @@
 #define GFXP_RAINBOW_OFF_CHAR 0x8A
 
 typedef struct GfxPrint {
-    /* 0x00 */ PrintCallback callback;
+    /* 0x00 */ outfun callback;
     /* 0x04 */ Gfx* dList;
     /* 0x08 */ u16 posX;
     /* 0x0A */ u16 posY;

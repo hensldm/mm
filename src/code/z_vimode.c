@@ -1,7 +1,7 @@
 #include "z64vimode.h"
 
 #include "stdbool.h"
-#include "PR/viint.h"
+#include "PRinternal/viint.h"
 
 #include "debug.h"
 #include "macros.h"

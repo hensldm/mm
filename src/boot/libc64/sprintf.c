@@ -3,6 +3,8 @@
 #include "stdint.h"
 #include "string.h"
 
+#include "lib/ultralib/src/libc/xstdio.h"
+
 void* proutPrintf(void* dst, const char* fmt, size_t size) {
     return (void*)((uintptr_t)memcpy(dst, fmt, size) + size);
 }

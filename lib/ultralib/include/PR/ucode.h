@@ -165,6 +165,13 @@ extern long long int gspF3DLX2_Rej_fifoDataStart[],gspF3DLX2_Rej_fifoDataEnd[];
 extern long long int gspL3DEX2_fifoTextStart[],    gspL3DEX2_fifoTextEnd[];
 extern long long int gspL3DEX2_fifoDataStart[],    gspL3DEX2_fifoDataEnd[];
 
+#ifdef F3DEX_GBI_PL
+
+extern long long int gspF3DZEX2_NoN_PosLight_fifoTextStart[], gspF3DZEX2_NoN_PosLight_fifoTextEnd[];
+extern long long int gspF3DZEX2_NoN_PosLight_fifoDataStart[], gspF3DZEX2_NoN_PosLight_fifoDataEnd[];
+
+#endif
+
 /* XBUS version */
 extern long long int gspF3DEX2_xbusTextStart[],    gspF3DEX2_xbusTextEnd[];
 extern long long int gspF3DEX2_xbusDataStart[],    gspF3DEX2_xbusDataEnd[];

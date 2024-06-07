@@ -68,6 +68,9 @@ typedef unsigned long   size_t;
 #endif
 #endif
 
+typedef void* TexturePtr;
+
+
 #endif  /* _LANGUAGE_C */
 
 #ifndef TRUE

@@ -34,7 +34,6 @@
 #include "padmgr.h"
 
 #include "libc64/sprintf.h"
-#include "PR/os_motor.h"
 
 #include "fault.h"
 #include "macros.h"

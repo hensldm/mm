@@ -42,7 +42,7 @@ static char zeroes[] = "00000000000000000000000000000000";
 
 static void _Putfld(_Pft *pf, va_list *pap, char code, char *ac);
 
-int _Printf(outfun prout, char *arg, const char *fmt, va_list args) {
+int _Printf(outfun prout, void *arg, const char *fmt, va_list args) {
     _Pft x;
     
     x.nchar = 0;

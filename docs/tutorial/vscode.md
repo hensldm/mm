@@ -48,6 +48,7 @@ You can create a `.vscode/c_cpp_properties.json` file with `C/C++: Edit Configur
             "includePath": [ // Matches makefile's includes
                 "include",
                 "include/libc",
+                "lib/ultralib/include",
                 "src",
                 "assets",
                 "build/n64-us/",
