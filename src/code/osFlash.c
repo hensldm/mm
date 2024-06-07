@@ -1,5 +1,7 @@
 #include "ultra64.h"
-#include "PR/os_internal_flash.h"
+
+#include "stdint.h"
+
 #include "alignment.h"
 #include "macros.h"
 
@@ -10,6 +12,9 @@ OSPiHandle __osFlashHandler ALIGNED(8);
 OSMesg __osFlashMsgBuf[1];
 s32 __osFlashVersion;
 static s32 sBssPad[5];
+
+// Variables are put before most headers as a hacky way to bypass bss reordering
+#include "PR/os_internal_flash.h"
 
 uintptr_t osFlashGetAddr(u32 pageNum) {
     uintptr_t addr;

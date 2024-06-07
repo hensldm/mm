@@ -13,17 +13,20 @@ SHELL = /bin/bash
 ifeq ($(OS),Windows_NT)
   DETECTED_OS = windows
   MAKE = make
+  AR = ar
   VENV_BIN_DIR = Scripts
 else
   UNAME_S := $(shell uname -s)
   ifeq ($(UNAME_S),Linux)
     DETECTED_OS = linux
     MAKE = make
+    AR = ar
     VENV_BIN_DIR = bin
   endif
   ifeq ($(UNAME_S),Darwin)
     DETECTED_OS = macos
     MAKE = gmake
+    AR = gar
     VENV_BIN_DIR = bin
   endif
 endif
@@ -86,14 +89,17 @@ BASEROM_DIR   := baseroms/$(VERSION)
 BUILD_DIR     := build/$(VERSION)
 EXTRACTED_DIR := extracted/$(VERSION)
 
+ULTRALIB_VERSION := K
+ULTRALIB_TARGET  := libultra_rom
 
 #### Tools ####
 ifneq ($(shell type $(MIPS_BINUTILS_PREFIX)ld >/dev/null 2>/dev/null; echo $$?), 0)
   $(error Unable to find $(MIPS_BINUTILS_PREFIX)ld. Please install or build MIPS binutils, commonly mips-linux-gnu. (or set MIPS_BINUTILS_PREFIX if your MIPS binutils install uses another prefix))
 endif
 
-CC       := tools/ido_recomp/$(DETECTED_OS)/7.1/cc
-CC_OLD   := tools/ido_recomp/$(DETECTED_OS)/5.3/cc
+CC          := tools/ido_recomp/$(DETECTED_OS)/7.1/cc
+CC_OLD      := tools/ido_recomp/$(DETECTED_OS)/5.3/cc
+CC_ULTRALIB := $(PROJECT_DIR)/$(CC_OLD)
 
 # if ORIG_COMPILER is 1, check that either QEMU_IRIX is set or qemu-irix package installed
 ifeq ($(ORIG_COMPILER),1)
@@ -113,7 +119,7 @@ NM      := $(MIPS_BINUTILS_PREFIX)nm
 OBJCOPY := $(MIPS_BINUTILS_PREFIX)objcopy
 OBJDUMP := $(MIPS_BINUTILS_PREFIX)objdump
 
-IINC := -Iinclude -Iinclude/libc -Isrc -I$(BUILD_DIR) -I. -I$(EXTRACTED_DIR)
+IINC := -Iinclude -Iinclude/libc -Iinclude/libultra -Ilib/ultralib/include -Isrc -I$(BUILD_DIR) -I. -I$(EXTRACTED_DIR)
 
 ifeq ($(KEEP_MDEBUG),0)
   RM_MDEBUG = $(OBJCOPY) --remove-section .mdebug $@
@@ -181,8 +187,10 @@ CFLAGS           += -G 0 -non_shared -Xcpluscomm -nostdinc -Wab,-r4300_mul
 
 WARNINGS         := -fullwarn -verbose -woff 624,649,838,712,516,513,596,564,594,807
 ASFLAGS          := -march=vr4300 -32 -G0
-GBI_DEFINES 	 := -DF3DEX_GBI_2 -DF3DEX_GBI_PL -DGBI_DOWHILE
-COMMON_DEFINES   := -D_MIPS_SZLONG=32 $(GBI_DEFINES)
+RELEASE_DEFINES  := -DNDEBUG -D_FINALROM
+GBI_DEFINES      := -DF3DEX_GBI_2 -DF3DEX_GBI_PL -DGBI_DOWHILE
+LIBULTRA_DEFINES := -DBUILD_VERSION=VERSION_$(ULTRALIB_VERSION)
+COMMON_DEFINES   := -D_MIPS_SZLONG=32 $(RELEASE_DEFINES) $(GBI_DEFINES) $(LIBULTRA_DEFINES)
 AS_DEFINES       := $(COMMON_DEFINES) -DMIPSEB -D_LANGUAGE_ASSEMBLY -D_ULTRA64
 C_DEFINES        := $(COMMON_DEFINES) -DLANGUAGE_C -D_LANGUAGE_C
 ENDIAN           := -EB
@@ -196,9 +204,11 @@ OBJDUMP_FLAGS := --disassemble --reloc --disassemble-zeroes -Mreg-names=32
 ifneq ($(OBJDUMP_BUILD), 0)
   OBJDUMP_CMD = $(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
   OBJCOPY_BIN = $(OBJCOPY) -O binary $@ $@.bin
+  LIBDUMP_CMD = $(AR) xo --output $(@D) $@
 else
   OBJDUMP_CMD = @:
   OBJCOPY_BIN = @:
+  LIBDUMP_CMD = @:
 endif
 
 ifeq ($(shell getconf LONG_BIT), 32)
@@ -221,8 +231,14 @@ SPEC := spec
 # create asm directories
 $(shell mkdir -p asm data extracted)
 
+ULTRALIB_DIR  := lib/ultralib
+ULTRALIB_LIB  := $(ULTRALIB_DIR)/build/$(ULTRALIB_VERSION)/$(ULTRALIB_TARGET)/$(ULTRALIB_TARGET).a
+LIBULTRA_DIR  := lib/libultra
+LIBULTRA_LIB  := $(BUILD_DIR)/$(LIBULTRA_DIR)/libultra.a
+
 SRC_DIRS := $(shell find src -type d)
 ASM_DIRS := $(shell find asm -type d -not -path "asm/non_matchings*") $(shell find data -type d)
+LIB_DIRS := $(foreach f,$(LIBULTRA_DIR),$f)
 
 ifneq ($(wildcard $(EXTRACTED_DIR)/assets/audio),)
   SAMPLE_EXTRACT_DIRS := $(shell find $(EXTRACTED_DIR)/assets/audio/samples -type d)
@@ -327,7 +343,7 @@ O_FILES        := $(foreach f,$(S_FILES:.s=.o),$(BUILD_DIR)/$f) \
                   $(foreach f,$(BASEROM_FILES),$(BUILD_DIR)/$f.o) \
                   $(foreach f,$(ARCHIVES_O),$(BUILD_DIR)/$f)
 
-SHIFTJIS_C_FILES := src/libultra/voice/voicecheckword.c src/audio/voice_external.c src/code/z_message.c src/code/z_message_nes.c
+SHIFTJIS_C_FILES := src/audio/voice_external.c src/code/z_message.c src/code/z_message_nes.c
 SHIFTJIS_O_FILES := $(foreach f,$(SHIFTJIS_C_FILES:.c=.o),$(BUILD_DIR)/$f)
 
 OVL_RELOC_FILES := $(shell $(CPP) $(CPPFLAGS) $(SPEC) | $(BUILD_DIR_REPLACE) | grep -o '[^"]*_reloc.o' )
@@ -347,6 +363,7 @@ OTHER_DIRS := assets/text baserom dmadata $(shell find linker_scripts -type d)
 $(shell mkdir -p $(foreach dir, \
                       $(SRC_DIRS) \
                       $(ASM_DIRS) \
+                      $(LIB_DIRS) \
                       $(OTHER_DIRS), \
                     $(BUILD_DIR)/$(dir)))
 $(shell mkdir -p $(foreach dir, \
@@ -369,13 +386,6 @@ $(shell mkdir -p $(foreach dir, \
 endif
 
 # directory flags
-$(BUILD_DIR)/src/libultra/os/%.o: OPTFLAGS := -O1
-$(BUILD_DIR)/src/libultra/voice/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/libc/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/gu/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/rmon/%.o: OPTFLAGS := -O2
-
 $(BUILD_DIR)/src/boot/libu64/%.o: OPTFLAGS := -O2
 
 $(BUILD_DIR)/src/boot/libc/%.o: OPTFLAGS := -O2
@@ -388,11 +398,6 @@ $(BUILD_DIR)/assets/%.o: OPTFLAGS := -O1
 $(BUILD_DIR)/assets/%.o: ASM_PROC_FLAGS := 
 
 # file flags
-$(BUILD_DIR)/src/libultra/libc/ll.o: OPTFLAGS := -O1
-$(BUILD_DIR)/src/libultra/libc/ll.o: MIPS_VERSION := -mips3 -32
-$(BUILD_DIR)/src/libultra/libc/llcvt.o: OPTFLAGS := -O1
-$(BUILD_DIR)/src/libultra/libc/llcvt.o: MIPS_VERSION := -mips3 -32
-
 $(BUILD_DIR)/src/boot/fault.o: CFLAGS += -trapuv
 $(BUILD_DIR)/src/boot/fault_drawer.o: CFLAGS += -trapuv
 
@@ -406,8 +411,6 @@ $(BUILD_DIR)/src/code/osFlash.o: OPTFLAGS := -g
 $(BUILD_DIR)/src/code/osFlash.o: MIPS_VERSION := -mips1
 
 # cc & asm-processor
-$(BUILD_DIR)/src/libultra/%.o: CC := $(CC_OLD)
-
 $(BUILD_DIR)/src/boot/%.o: CC := $(ASM_PROC) $(ASM_PROC_FLAGS) $(CC) -- $(AS) $(ASFLAGS) --
 
 $(BUILD_DIR)/src/code/%.o: CC := $(ASM_PROC) $(ASM_PROC_FLAGS) $(CC) -- $(AS) $(ASFLAGS) --
@@ -443,10 +446,10 @@ $(ROMC): $(ROM) $(ELF) $(BUILD_DIR)/dmadata/compress_ranges.txt
 	$(PYTHON) tools/buildtools/compress.py --in $(ROM) --out $@ --dma-start `tools/buildtools/dmadata_start.sh $(NM) $(ELF)` --compress `cat $(BUILD_DIR)/dmadata/compress_ranges.txt` --threads $(N_THREADS)
 	$(PYTHON) -m ipl3checksum sum --cic 6105 --update $@
 
-$(ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(LDSCRIPT) $(LD_FINAL_FILES) \
+$(ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(LIBULTRA_LIB) $(LDSCRIPT) $(LD_FINAL_FILES) \
         $(SAMPLEBANK_O_FILES) $(SOUNDFONT_O_FILES) $(SEQUENCE_O_FILES) \
         $(BUILD_DIR)/assets/audio/sequence_font_table.o
-	$(LD) -T $(LDSCRIPT) -T $(LD_FINAL_FILES) --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(MAP) -o $@
+	$(LD) -T $(LDSCRIPT) -T $(LD_FINAL_FILES) --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(MAP) $(LIBULTRA_LIB) -o $@
 
 ## Order-only prerequisites 
 # These ensure e.g. the O_FILES are built before the OVL_RELOC_FILES.
@@ -470,12 +473,15 @@ $(O_FILES): | schedule_inc_files
 clean:
 	$(RM) -r $(BUILD_DIR)
 
+libclean:
+	$(MAKE) -C lib/ultralib clean VERSION=$(ULTRALIB_VERSION) TARGET=$(ULTRALIB_TARGET)
+
 assetclean:
 	$(RM) -r $(EXTRACTED_DIR)/assets
 	$(RM) -r $(EXTRACTED_DIR)/text
 	$(RM) -r $(BUILD_DIR)/assets
 
-distclean: assetclean clean
+distclean: assetclean libclean clean
 	$(RM) -r asm data extracted
 	$(MAKE) -C tools clean
 
@@ -495,6 +501,8 @@ setup:
 # TODO this is a temporary rule for testing audio, to be removed
 setup-audio:
 	$(AUDIO_EXTRACT) -o $(EXTRACTED_DIR) -v $(VERSION) --read-xml
+
+lib: $(ULTRALIB_LIB)
 
 assets:
 	$(PYTHON) tools/extract_assets.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/assets -j$(N_THREADS) -Z Wno-hardcoded-pointer -v $(VERSION)
@@ -525,7 +533,7 @@ ifeq ($(N64_EMULATOR),)
 endif
 	$(N64_EMULATOR) $<
 
-.PHONY: all rom compress clean assetclean distclean assets disasm init venv setup run
+.PHONY: all rom compress clean libclean assetclean distclean lib assets disasm init venv setup run
 .DEFAULT_GOAL := rom
 all: rom compress
 
@@ -534,6 +542,13 @@ all: rom compress
 
 $(BUILD_DIR)/%.ld: %.ld
 	$(CPP) $(CPPFLAGS) $(IINC) $< > $@
+
+$(LIBULTRA_LIB): $(ULTRALIB_LIB)
+	cp $< $@
+	$(LIBDUMP_CMD)
+
+$(ULTRALIB_LIB):
+	$(MAKE) -C lib/ultralib VERSION=$(ULTRALIB_VERSION) TARGET=$(ULTRALIB_TARGET) MODERN_LD=1 CROSS=$(MIPS_BINUTILS_PREFIX) COMPILER_DIR=$(dir $(CC_ULTRALIB)) AR=$(AR)
 
 $(BUILD_DIR)/$(SPEC): $(SPEC)
 	$(CPP) $(CPPFLAGS) $< | $(BUILD_DIR_REPLACE) > $@
@@ -600,20 +615,6 @@ $(SHIFTJIS_O_FILES): $(BUILD_DIR)/src/%.o: src/%.c
 	$(SHIFTJIS_CONV) -o $(@:.o=.enc.c) $<
 	$(CC_CHECK_COMP) $(CC_CHECK_FLAGS) $(IINC) $(CC_CHECK_WARNINGS) $(C_DEFINES) $(MIPS_BUILTIN_DEFS) -o $@ $(@:.o=.enc.c)
 	$(CC) -c $(CFLAGS) $(IINC) $(WARNINGS) $(C_DEFINES) $(MIPS_VERSION) $(ENDIAN) $(OPTFLAGS) -o $@ $(@:.o=.enc.c)
-	$(OBJDUMP_CMD)
-	$(RM_MDEBUG)
-
-$(BUILD_DIR)/src/libultra/libc/ll.o: src/libultra/libc/ll.c
-	$(CC_CHECK_COMP) $(CC_CHECK_FLAGS) $(IINC) $(CC_CHECK_WARNINGS) $(C_DEFINES) $(MIPS_BUILTIN_DEFS) -o $@ $<
-	$(CC) -c $(CFLAGS) $(IINC) $(WARNINGS) $(C_DEFINES) $(MIPS_VERSION) $(ENDIAN) $(OPTFLAGS) -o $@ $<
-	$(PYTHON) tools/set_o32abi_bit.py $@
-	$(OBJDUMP_CMD)
-	$(RM_MDEBUG)
-
-$(BUILD_DIR)/src/libultra/libc/llcvt.o: src/libultra/libc/llcvt.c
-	$(CC_CHECK_COMP) $(CC_CHECK_FLAGS) $(IINC) $(CC_CHECK_WARNINGS) $(C_DEFINES) $(MIPS_BUILTIN_DEFS) -o $@ $<
-	$(CC) -c $(CFLAGS) $(IINC) $(WARNINGS) $(C_DEFINES) $(MIPS_VERSION) $(ENDIAN) $(OPTFLAGS) -o $@ $<
-	$(PYTHON) tools/set_o32abi_bit.py $@
 	$(OBJDUMP_CMD)
 	$(RM_MDEBUG)
 

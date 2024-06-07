@@ -2,6 +2,7 @@
 #define Z64INVENTORY_H
 
 #include "PR/ultratypes.h"
+#include "other_types.h"
 
 struct PlayState;
 
