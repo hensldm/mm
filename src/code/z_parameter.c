@@ -1,5 +1,6 @@
 #include "global.h"
 #include "PR/gs2dex.h"
+#include "flg_set.h"
 #include "sys_cfb.h"
 #include "sys_cmpdma.h"
 #include "sys_ucode.h"
@@ -6740,6 +6741,10 @@ void Interface_Draw(PlayState* play) {
         }
     }
 
+    if (pauseCtx->debugEditor == DEBUG_EDITOR_EVENTS) {
+        FlagSet_Draw(&play->state);
+    }
+
     // Draw over the entire screen (used in gameover)
     if (interfaceCtx->screenFillAlpha != 0) {
         gDPPipeSync(OVERLAY_DISP++);
@@ -7244,6 +7249,10 @@ void Interface_Update(PlayState* play) {
     }
 
     Interface_UpdateBottleTimers(play);
+
+    if (play->pauseCtx.debugEditor == DEBUG_EDITOR_EVENTS) {
+        FlagSet_Update(&play->state);
+    }
 
     // Update Grandma's Story
     if (interfaceCtx->storyState != STORY_STATE_OFF) {
