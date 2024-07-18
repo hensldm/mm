@@ -349,7 +349,10 @@ void KaleidoScope_HandlePageToggles(PlayState* play, Input* input) {
     InterfaceContext* interfaceCtx = &play->interfaceCtx;
 
     //! FAKE
-    if (1) {}
+    if ((pauseCtx->debugEditor == DEBUG_EDITOR_NONE) && CHECK_BTN_ALL(input->press.button, BTN_L)) {
+        pauseCtx->debugEditor = DEBUG_EDITOR_INVENTORY_INIT;
+        return;
+    }
 
     if ((pauseCtx->debugEditor != DEBUG_EDITOR_NONE) || pauseCtx->itemDescriptionOn) {
         return;
