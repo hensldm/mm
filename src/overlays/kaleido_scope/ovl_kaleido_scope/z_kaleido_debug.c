@@ -34,6 +34,7 @@ s16 sCurRow = 0;
 #define INV_EDITOR_SECTION_DUNGEON_ITEMS 80
 #define INV_EDITOR_SECTION_STRAY_FAIRIES 84
 #define INV_EDITOR_SECTION_DOUBLE_DEFENSE 88
+#define INV_EDITOR_SECTION_DOUBLE_MAGIC 89
 
 // Geometry of the highlights for the selected section
 typedef struct {
@@ -89,12 +90,8 @@ SectionPosition sSectionPositions[] = {
     { 202, 168, 22 }, { 223, 168, 22 }, { 244, 168, 22 }, { 265, 168, 22 },
     // Life (88)
     { 42, 202, 14 },
-    // Magic
+    // Magic (89)
     { 73, 202, 14 },
-    // Lottery
-    { 136, 202, 38 },
-    // Gold Color/Bombers Code (not highlighted properly)
-    { 214, 202, 74 }, { 214, 202, 74 },
 };
 // clang-format on
 
@@ -188,13 +185,17 @@ void KaleidoScope_DrawInventoryEditorText(Gfx** gfxP) {
     // Rupees
     GfxPrint_SetPos(&printer, 4, 2);
     GfxPrint_SetColor(&printer, 255, 60, 0, 255);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾙﾋﾟｰ");
+    GfxPrint_Printf(&printer, "%s", "RUP");
+    GfxPrint_SetPos(&printer, 4, 3);
+    GfxPrint_Printf(&printer, "%s", "EES");
 
     // Hearts
     GfxPrint_SetPos(&printer, 15, 2);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾊｰﾄ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "HRT");
     GfxPrint_SetPos(&printer, 15, 3);
     GfxPrint_Printf(&printer, "%s", "MAX");
+    GfxPrint_SetPos(&printer, 21, 2);
+    GfxPrint_Printf(&printer, "%s", "HRT");
     GfxPrint_SetPos(&printer, 21, 3);
     GfxPrint_Printf(&printer, "%s", "NOW");
     GfxPrint_SetPos(&printer, 28, 3);
@@ -202,21 +203,27 @@ void KaleidoScope_DrawInventoryEditorText(Gfx** gfxP) {
 
     // Items
     GfxPrint_SetPos(&printer, 4, 5);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｱ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "I");
     GfxPrint_SetPos(&printer, 4, 6);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｲ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "T");
     GfxPrint_SetPos(&printer, 4, 7);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾃ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "E");
     GfxPrint_SetPos(&printer, 4, 8);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾑ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "M");
+    GfxPrint_SetPos(&printer, 4, 9);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "S");
 
     // Masks
     GfxPrint_SetPos(&printer, 24, 5);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾏ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "M");
     GfxPrint_SetPos(&printer, 24, 6);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｽ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "A");
     GfxPrint_SetPos(&printer, 24, 7);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｸ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "S");
+    GfxPrint_SetPos(&printer, 24, 8);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "K");
+    GfxPrint_SetPos(&printer, 24, 9);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "S");
 
     // Boss (Remains)
     GfxPrint_SetPos(&printer, 4, 13);
@@ -224,101 +231,105 @@ void KaleidoScope_DrawInventoryEditorText(Gfx** gfxP) {
 
     // Sword
     GfxPrint_SetPos(&printer, 13, 13);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｹ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "S");
     GfxPrint_SetPos(&printer, 13, 14);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾝ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "W");
+    GfxPrint_SetPos(&printer, 13, 15);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "D");
 
     // Shield
     GfxPrint_SetPos(&printer, 17, 13);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾀ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "S");
     GfxPrint_SetPos(&printer, 17, 14);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾃ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "H");
+    GfxPrint_SetPos(&printer, 17, 15);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "D");
 
     // Ocarina (Songs)
     GfxPrint_SetPos(&printer, 21, 13);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｵｶ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "SO");
     GfxPrint_SetPos(&printer, 21, 14);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾘﾅ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "NG");
 
     // Schedule (Bombers Notebook)
     GfxPrint_SetPos(&printer, 4, 17);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｽｹｼﾞｭｰﾙ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "BOOK");
 
     // Quiver
-    GfxPrint_SetPos(&printer, 12, 17);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾔ");
-    GfxPrint_SetPos(&printer, 12, 18);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾀﾃ");
+    GfxPrint_SetPos(&printer, 11, 17);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "QUI");
+    GfxPrint_SetPos(&printer, 11, 18);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "VER");
 
     // Bomb Bag
     GfxPrint_SetPos(&printer, 16, 17);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾎﾞﾑ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "BMB");
     GfxPrint_SetPos(&printer, 16, 18);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾌｸﾛ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "BAG");
 
     // Gold Skulls
     GfxPrint_SetPos(&printer, 22, 17);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｷﾝ");
-    GfxPrint_SetPos(&printer, 22, 18);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｽﾀ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "GS");
 
     // Heart Pieces
     GfxPrint_SetPos(&printer, 29, 17);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ﾊｰﾄ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "HRT");
     GfxPrint_SetPos(&printer, 29, 18);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｶｹﾗ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "PCS");
     GfxPrint_SetPos(&printer, 34, 18);
     GfxPrint_Printf(&printer, "%s", "/4");
 
     // Keys
     GfxPrint_SetPos(&printer, 4, 21);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｶ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "K");
     GfxPrint_SetPos(&printer, 4, 22);
-    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "ｷﾞ");
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "E");
+    GfxPrint_SetPos(&printer, 4, 23);
+    GfxPrint_Printf(&printer, "%s", GFXP_KATAKANA "Y");
 
     // Map/Compass
     GfxPrint_SetPos(&printer, 12, 21);
     GfxPrint_Printf(&printer, "%s", "MAP");
     GfxPrint_SetPos(&printer, 12, 22);
-    GfxPrint_Printf(&printer, "%s", "ｺﾝﾊﾟ");
+    GfxPrint_Printf(&printer, "%s", "COMP");
 
     // Fairies
-    GfxPrint_SetPos(&printer, 23, 21);
-    GfxPrint_Printf(&printer, "%s", "ﾖｳ");
-    GfxPrint_SetPos(&printer, 23, 22);
-    GfxPrint_Printf(&printer, "%s", "ｾｲ");
+    GfxPrint_SetPos(&printer, 23, 20);
+    GfxPrint_Printf(&printer, "%s", "FAIRIES");
 
     // Life (double defense)
     GfxPrint_SetPos(&printer, 4, 25);
-    GfxPrint_Printf(&printer, "%s", "ｲ");
+    GfxPrint_Printf(&printer, "%s", "D");
     GfxPrint_SetPos(&printer, 4, 26);
-    GfxPrint_Printf(&printer, "%s", "ﾉ");
+    GfxPrint_Printf(&printer, "%s", "E");
     GfxPrint_SetPos(&printer, 4, 27);
-    GfxPrint_Printf(&printer, "%s", "ﾁ");
+    GfxPrint_Printf(&printer, "%s", "F");
 
     // Magic
     GfxPrint_SetPos(&printer, 8, 25);
-    GfxPrint_Printf(&printer, "%s", "ﾏ");
+    GfxPrint_Printf(&printer, "%s", "M");
     GfxPrint_SetPos(&printer, 8, 26);
-    GfxPrint_Printf(&printer, "%s", "ﾎ");
+    GfxPrint_Printf(&printer, "%s", "A");
     GfxPrint_SetPos(&printer, 8, 27);
-    GfxPrint_Printf(&printer, "%s", "ｳ");
+    GfxPrint_Printf(&printer, "%s", "G");
 
     // Lottery
     GfxPrint_SetPos(&printer, 13, 25);
-    GfxPrint_Printf(&printer, "%s", "ﾀｶﾗ");
+    GfxPrint_Printf(&printer, "%s", "LOT");
     GfxPrint_SetPos(&printer, 13, 26);
-    GfxPrint_Printf(&printer, "%s", "ｸｼﾞ");
+    GfxPrint_Printf(&printer, "%s", "TRY");
 
     // Gold Color (Oceanside Spider House Mask Order)
+    GfxPrint_SetPos(&printer, 23, 23);
+    GfxPrint_Printf(&printer, "%s", "MASK");
     GfxPrint_SetPos(&printer, 23, 24);
-    GfxPrint_Printf(&printer, "%s", "ｷﾝｲﾛ");
+    GfxPrint_Printf(&printer, "%s", "CODE");
 
     // Bombers (code)
     GfxPrint_SetPos(&printer, 23, 26);
-    GfxPrint_Printf(&printer, "%s", "ﾎﾞﾝ");
+    GfxPrint_Printf(&printer, "%s", "BOMB");
     GfxPrint_SetPos(&printer, 23, 27);
-    GfxPrint_Printf(&printer, "%s", "ﾊﾞｰｽﾞ");
+    GfxPrint_Printf(&printer, "%s", "CODE");
 
     *gfxP = GfxPrint_Close(&printer);
     GfxPrint_Destroy(&printer);
@@ -609,7 +620,7 @@ void KaleidoScope_DrawInventoryEditor(PlayState* play) {
 
     // Magic
     //! @bug should be gSaveContext.save.saveInfo.playerData.isDoubleMagicAcquired
-    KaleidoScope_DrawDigit(play, gSaveContext.save.saveInfo.playerData.doubleDefense, 75, 202);
+    KaleidoScope_DrawDigit(play, gSaveContext.save.saveInfo.playerData.isDoubleMagicAcquired, 75, 202);
 
     // Lottery
     // Loop over columns (i), (counterDigits[1] stores rectLeft)
@@ -1076,7 +1087,7 @@ void KaleidoScope_UpdateInventoryEditor(PlayState* play) {
                     }
                 }
 
-            } else {
+            } else if (sCurSection < INV_EDITOR_SECTION_DOUBLE_MAGIC) {
                 // Double Defense
                 if (CHECK_BTN_ALL(input->press.button, BTN_CUP) || CHECK_BTN_ALL(input->press.button, BTN_CLEFT) ||
                     CHECK_BTN_ALL(input->press.button, BTN_CDOWN) || CHECK_BTN_ALL(input->press.button, BTN_CRIGHT)) {
@@ -1085,6 +1096,17 @@ void KaleidoScope_UpdateInventoryEditor(PlayState* play) {
                         gSaveContext.save.saveInfo.inventory.defenseHearts = 0;
                     } else {
                         gSaveContext.save.saveInfo.inventory.defenseHearts = 20;
+                    }
+                }
+            } else {
+                // Double Magic
+                if (CHECK_BTN_ALL(input->press.button, BTN_CUP) || CHECK_BTN_ALL(input->press.button, BTN_CLEFT) ||
+                    CHECK_BTN_ALL(input->press.button, BTN_CDOWN) || CHECK_BTN_ALL(input->press.button, BTN_CRIGHT)) {
+                    gSaveContext.save.saveInfo.playerData.isDoubleMagicAcquired ^= 1;
+                    if (!gSaveContext.save.saveInfo.playerData.isDoubleMagicAcquired) {
+                        R_MAGIC_DBG_SET_UPGRADE = MAGIC_DBG_SET_UPGRADE_NORMAL_METER;
+                    } else {
+                        R_MAGIC_DBG_SET_UPGRADE = MAGIC_DBG_SET_UPGRADE_DOUBLE_METER;
                     }
                 }
             }
