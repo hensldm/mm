@@ -89,8 +89,8 @@ void KaleidoSetup_Update(PlayState* play) {
     Player* player = GET_PLAYER(play);
     PauseContext* pauseCtx = &play->pauseCtx;
 
-    if (CHECK_BTN_ALL(input->cur.button, BTN_R)) {
-        if (msgCtx && msgCtx) {}
+    if (CHECK_BTN_ALL(input->cur.button, BTN_L) && CHECK_BTN_ALL(input->press.button, BTN_DLEFT)) {
+        pauseCtx->debugEditor = DEBUG_EDITOR_EVENTS;
     }
 
     if (IS_PAUSED(pauseCtx) || (play->gameOverCtx.state != GAMEOVER_INACTIVE)) {
