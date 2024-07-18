@@ -6,4 +6,6 @@
 #include "variables.h"
 #include "macros.h"
 
+#include "z64debug.h"
+
 #endif
