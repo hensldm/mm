@@ -938,7 +938,7 @@ void Play_UpdateMain(PlayState* this) {
 
     Actor_SetMovementScale(this->state.framerateDivisor);
 
-    if (FrameAdvance_Update(&this->frameAdvCtx, &input[1])) {
+    if (FrameAdvance_Update(&this->frameAdvCtx, &input[0])) {
         if ((this->transitionMode == TRANS_MODE_OFF) && (this->transitionTrigger != TRANS_TRIGGER_OFF)) {
             this->transitionMode = TRANS_MODE_SETUP;
         }
