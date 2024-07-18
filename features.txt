@@ -2,3 +2,4 @@ Added debug features + button combos to activate (function for button combos):
 * Map select: Hold L and Press DPad-Up (Graph_UpdateGame)
 * Noclip: Hold L and Press DPad-Right (Player_UpdateNoclip)
 * Frame Advance: Hold L and Press DPad-Down (FrameAdvance_Update)
+* Event Debug Editor: Hold L and Press DPad-Left (KaleidoSetup_Update)
