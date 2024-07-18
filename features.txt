@@ -3,3 +3,4 @@ Added debug features + button combos to activate (function for button combos):
 * Noclip: Hold L and Press DPad-Right (Player_UpdateNoclip)
 * Frame Advance: Hold L and Press DPad-Down (FrameAdvance_Update)
 * Event Debug Editor: Hold L and Press DPad-Left (KaleidoSetup_Update)
+* Inventory Debug Editor: Press L when Paused (KaleidoScope_HandlePageToggles)
