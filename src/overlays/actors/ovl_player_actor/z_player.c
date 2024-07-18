@@ -7,6 +7,7 @@
 #include "z64player.h"
 
 #include "global.h"
+#include "z64debug_text.h"
 #include "z64horse.h"
 #include "z64lifemeter.h"
 #include "zelda_arena.h"
@@ -12838,6 +12839,93 @@ void Player_UpdateCommon(Player* this, PlayState* play, Input* input) {
     this->actor.shape.yOffset = this->unk_ABC + this->unk_AC0;
 }
 
+/**
+ * Updates the "Noclip" debug feature, which allows the player to fly around anywhere
+ * in the world and clip through any collision.
+ *
+ * Noclip can be toggled on and off with the following button combo:
+ * Hold L and press D-pad right
+ *
+ * To control Noclip mode:
+ * - Move horizontally with the 4 D-pad directions
+ * - Move up with B
+ * - Move down with A
+ * - Hold R to move faster
+ *
+ * With Noclip enabled, another button combination can be pressed to set all "temp clear" flags
+ * in the current room. To do so hold L and press D-pad left.
+ *
+ * @return  true if Noclip is disabled, false if enabled
+ */
+s32 Player_UpdateNoclip(Player* this, PlayState* play) {
+    static u32 sNoclipEnabled = false;
+    sPlayerControlInput = CONTROLLER1(&play->state);
+
+    if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_L) &&
+        CHECK_BTN_ALL(sPlayerControlInput->press.button, BTN_DRIGHT)) {
+
+        sNoclipEnabled ^= 1;
+
+        if (sNoclipEnabled) {
+            Camera_ChangeMode(Play_GetCamera(play, CAM_ID_MAIN), CAM_MODE_TARGET);
+        }
+    }
+
+    if (sNoclipEnabled) {
+        f32 speed;
+
+        if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_R)) {
+            speed = 100.0f;
+        } else {
+            speed = 20.0f;
+        }
+
+        DebugCamera_ScreenText(3, 1, DEBUG_CAM_TEXT_GOLD, "DEBUG MODE");
+
+        if (!CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_L)) {
+            if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_B)) {
+                this->actor.world.pos.y += speed;
+            } else if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_A)) {
+                this->actor.world.pos.y -= speed;
+            }
+
+            if (CHECK_BTN_ANY(sPlayerControlInput->cur.button, BTN_DUP | BTN_DLEFT | BTN_DDOWN | BTN_DRIGHT)) {
+                s16 angle;
+                s16 temp;
+
+                angle = temp = Camera_GetInputDirYaw(GET_ACTIVE_CAM(play));
+
+                if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_DDOWN)) {
+                    angle = temp + 0x8000;
+                } else if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_DLEFT)) {
+                    angle = temp + 0x4000;
+                } else if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_DRIGHT)) {
+                    angle = temp - 0x4000;
+                }
+
+                this->actor.world.pos.x += speed * Math_SinS(angle);
+                this->actor.world.pos.z += speed * Math_CosS(angle);
+            }
+        }
+
+        Player_StopHorizontalMovement(this);
+
+        this->actor.gravity = 0.0f;
+        this->actor.velocity.x = this->actor.velocity.y = this->actor.velocity.z = 0.0f;
+
+        if (CHECK_BTN_ALL(sPlayerControlInput->cur.button, BTN_L) &&
+            CHECK_BTN_ALL(sPlayerControlInput->press.button, BTN_DLEFT)) {
+            Flags_SetClearTemp(play, play->roomCtx.curRoom.num);
+        }
+
+        Math_Vec3f_Copy(&this->actor.home.pos, &this->actor.world.pos);
+
+        return false;
+    }
+
+    return true;
+}
+
 Vec3f D_8085D41C = { 0.0f, 0.0f, -30.0f };
 
 void Player_Update(Actor* thisx, PlayState* play) {
@@ -12847,6 +12935,10 @@ void Player_Update(Actor* thisx, PlayState* play) {
     s32 pad;
     Input input;
     s32 pad2;
+
+    if (!Player_UpdateNoclip(this, play)) {
+        return;
+    }
 
     this->stateFlags3 &= ~PLAYER_STATE3_10;
 
