@@ -7,3 +7,4 @@ Added debug features + button combos to activate (function for button combos):
 
 Additional Functions:
 * Debug_SpawnDust: Spawn colored dust at a position
+* Debug_PrintScreen: Function to print any text to the screen
