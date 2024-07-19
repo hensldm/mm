@@ -20,4 +20,6 @@ typedef enum DebugColor {
 
 void Debug_SpawnDust(struct PlayState* play, Vec3f* pos, DebugColor color);
 
+void Debug_PrintScreen(struct PlayState* play, s32 x, s32 y, DebugColor color, const char* fmt, ...);
+
 #endif
