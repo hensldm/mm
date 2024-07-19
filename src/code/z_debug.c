@@ -1,8 +1,13 @@
 #include "regs.h"
 #include "libc64/malloc.h"
+#include "libu64/gfxprint.h"
 #include "macros.h"
 
+#include "functions.h"
+
 #include "color.h"
+#include "gfx.h"
+#include "gfxalloc.h"
 #include "z64debug.h"
 #include "z64effect_ss.h"
 #include "z64math.h"
@@ -46,4 +51,46 @@ void Debug_SpawnDust(PlayState* play, Vec3f* pos, DebugColor color) {
     }
 
     func_800B0EB0(play, pos, &gZeroVec3f, &gZeroVec3f, &sDebugColors[color], &sDebugColors[color], 100, 5, 10);
+}
+
+void Debug_PrintScreen(PlayState* play, s32 x, s32 y, DebugColor color, const char* fmt, ...) {
+    GfxPrint printer;
+    Gfx* gfxHead;
+    Gfx* gfx;
+
+    va_list args;
+    va_start(args, fmt);
+
+    if ((color < 0) || (color >= DEBUG_COLOR_MAX)) {
+        color = DEBUG_COLOR_BLACK;
+    }
+
+    OPEN_DISPS(play->state.gfxCtx);
+
+    Gfx_SetupDL28_Opa(play->state.gfxCtx);
+
+    GfxPrint_Init(&printer);
+
+    gfxHead = POLY_OPA_DISP;
+    gfx = Gfx_Open(gfxHead);
+    gSPDisplayList(OVERLAY_DISP++, gfx);
+
+    GfxPrint_Open(&printer, gfx);
+
+    GfxPrint_SetColor(&printer, sDebugColors[color].r, sDebugColors[color].g, sDebugColors[color].b, 255);
+
+    GfxPrint_SetPos(&printer, x, y);
+    GfxPrint_VPrintf(&printer, fmt, args);
+
+    gfx = GfxPrint_Close(&printer);
+
+    gSPEndDisplayList(gfx++);
+    Gfx_Close(gfxHead, gfx);
+    POLY_OPA_DISP = gfx;
+
+    GfxPrint_Destroy(&printer);
+
+    va_end(args);
+
+    CLOSE_DISPS(play->state.gfxCtx);
 }
