@@ -1306,6 +1306,7 @@ wordReplace = {
     "play->actorCtx.targetCtx.unk4C": "play->actorCtx.targetCtx.lockOnIndex",
     "play->actorCtx.targetCtx.unk50": "play->actorCtx.targetCtx.lockOnTriangleSets",
     "play->actorCtx.targetCtx.unk8C": "play->actorCtx.targetCtx.nextTarget",
+    "play->actorCtx.titleCtxt": "play->actorCtx.titleCtx",
     "play->doorCtx.transitionActorList": "play->transitionActors.list",
     "play->nextEntranceIndex": "play->nextEntrance",
     "play->sceneNum": "play->sceneId",
@@ -1338,6 +1339,7 @@ wordReplace = {
     "actorCtx.unk_1F4.timer": "actorCtx.playerImpact.timer",
     "actorCtx.unk_1F4.unk_04": "actorCtx.playerImpact.dist",
     "actorCtx.unk_1F4.unk_08": "actorCtx.playerImpact.pos",
+    "actorCtx->titleCtxt": "actorCtx->titleCtx",
 
     "gSaveContext.unk_3DC8": "gSaveContext.timerOsTime",
     "gSaveContext.unk_3DD0": "gSaveContext.timerStates",
