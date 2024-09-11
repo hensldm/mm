@@ -316,7 +316,8 @@ ASSET_C_FILES_EXTRACTED := $(filter-out %.inc.c,$(foreach dir,$(ASSET_BIN_DIRS_E
 ASSET_C_FILES_COMMITTED := $(filter-out %.inc.c,$(foreach dir,$(ASSET_BIN_DIRS_COMMITTED),$(wildcard $(dir)/*.c)))
 C_FILES        := $(foreach dir,$(SRC_DIRS) $(ASSET_BIN_DIRS_C_FILES),$(wildcard $(dir)/*.c))
 S_FILES        := $(shell grep -F "\$$(BUILD_DIR)/asm" spec | sed 's/.*$$(BUILD_DIR)\/// ; s/\.o\".*/.s/') \
-                  $(shell grep -F "\$$(BUILD_DIR)/data" spec | sed 's/.*$$(BUILD_DIR)\/// ; s/\.o\".*/.s/')
+                  $(shell grep -F "\$$(BUILD_DIR)/data" spec | sed 's/.*$$(BUILD_DIR)\/// ; s/\.o\".*/.s/') \
+                  $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.s))
 SCHEDULE_FILES := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.schl))
 BASEROM_FILES  := $(shell grep -F "\$$(BUILD_DIR)/baserom" spec | sed 's/.*$$(BUILD_DIR)\/// ; s/\.o\".*//')
 ARCHIVES_O     := $(shell grep -F ".yar.o" spec | sed 's/.*include "// ; s/.*$$(BUILD_DIR)\/// ; s/\.o\".*/.o/')
@@ -490,6 +491,7 @@ setup:
 	$(MAKE) -C tools
 	$(PYTHON) tools/buildtools/decompress_baserom.py -v $(VERSION)
 	$(PYTHON) tools/buildtools/extract_baserom.py $(BASEROM_DIR)/baserom-decompressed.z64 $(EXTRACTED_DIR)/baserom --dmadata-start `cat $(BASEROM_DIR)/dmadata_start.txt` --dmadata-names $(BASEROM_DIR)/dmadata_names.txt
+	$(PYTHON) tools/buildtools/extract_incbins.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/incbin -v $(VERSION)
 	$(PYTHON) tools/buildtools/extract_yars.py $(EXTRACTED_DIR)/baserom -v $(VERSION)
 
 # TODO this is a temporary rule for testing audio, to be removed
