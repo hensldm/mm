@@ -118,12 +118,13 @@ def discard_decomped_files(files_spec, include_files):
                         assert last_line.count(".") == 1
                         last_line = (
                             last_line.strip()
-                            .split("$(BUILD_DIR)/", 1)[1]
-                            .replace(".o", ".c")[:-1]
+                            .split("$(BUILD_DIR)/", 1)[1][:-1]
                         )
-                        with open(root_path / last_line, "r") as f2:
-                            if "GLOBAL_ASM" in f2.read():
+                        cfile = root_path / last_line.replace(".o", ".c")
+                        if cfile.exists():
+                            if "GLOBAL_ASM" in cfile.read_text():
                                 include = True
+
 
             include |= force_include
             if include:
