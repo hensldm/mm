@@ -55,4 +55,8 @@ incbins:
     segment: code
     vram: 0x801D6200
     size: 0x400
+  - name: D_801D1E80
+    segment: code
+    vram: 0x801D1E80
+    size: 0x1000
 assets:

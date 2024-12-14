@@ -743,7 +743,7 @@ beginseg
     include "$(BUILD_DIR)/src/code/sys_flashrom.o"
     include "$(BUILD_DIR)/asm/code/kanread.text.o" // handwritten
     include "$(BUILD_DIR)/src/code/osFlash.o"
-    include "$(BUILD_DIR)/data/code/code_801D1E80.data.o"
+    include "$(BUILD_DIR)/src/code/code_801D1E80.o"
     pad_text
     pad_text
     pad_text
