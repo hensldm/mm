@@ -21,6 +21,11 @@ s32 gOverlayLogSeverity = 2;
 // Extract MIPS jump target from an instruction word
 #define MIPS_JUMP_TARGET(insn) (((insn)&0x03FFFFFF) << 2)
 
+#if MM_VERSION < N64_US
+#undef PRINTF
+#define PRINTF osSyncPrintf
+#endif
+
 /**
  * Performs runtime relocation of overlay files, loadable code segments.
  *
@@ -62,7 +67,7 @@ void Overlay_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlReloc
     uintptr_t vramu32 = (uintptr_t)vramStart;
 
     if (gOverlayLogSeverity >= 3) {
-        // "DoRelocation(%08x, %08x, %08x)\n"
+        PRINTF("DoRelocation(%08x, %08x, %08x)\n", allocatedRamAddr, ovlRelocs, vramStart);
     }
 
     sections[RELOC_SECTION_NULL] = 0;
@@ -87,8 +92,7 @@ void Overlay_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlReloc
                 if ((*relocDataP & 0x0F000000) == 0) {
                     *relocDataP = *relocDataP - vramu32 + allocu32;
                 } else if (gOverlayLogSeverity >= 3) {
-                    // Segment pointer 32 %08x
-                    // "セグメントポインタ32です %08x\n"
+                    PRINTF(T("セグメントポインタ32です %08x\n", "Segment pointer 32 %08x\n"), *relocDataP - vramu32);
                 }
                 break;
 
@@ -102,8 +106,8 @@ void Overlay_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlReloc
                         (*relocDataP & 0xFC000000) |
                         (((PHYS_TO_K0(MIPS_JUMP_TARGET(*relocDataP)) - vramu32 + allocu32) & 0x0FFFFFFF) >> 2);
                 } else if (gOverlayLogSeverity >= 3) {
-                    // Segment pointer 26 %08x
-                    // "セグメントポインタ26です %08x\n"
+                    PRINTF(T("セグメントポインタ26です %08x\n", "Segment pointer 26 %08x\n"),
+                           PHYS_TO_K0(MIPS_JUMP_TARGET(*relocDataP)) - vramu32);
                 }
                 break;
 
@@ -133,8 +137,8 @@ void Overlay_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlReloc
                     *luiInstRef = (*luiInstRef & 0xFFFF0000) | (((relocatedAddress >> 0x10) & 0xFFFF) + isLoNeg);
                     *relocDataP = (*relocDataP & 0xFFFF0000) | (relocatedAddress & 0xFFFF);
                 } else if (gOverlayLogSeverity >= 3) {
-                    // Segment pointer 16 %08x %08x %08x
-                    // "セグメントポインタ16です %08x %08x %08x"
+                    PRINTF(T("セグメントポインタ16です %08x %08x %08x\n", "Segment pointer 16 %08x %08x %08x\n"),
+                           ((*luiInstRef << 0x10) + (s16)*relocDataP) - vramu32, *luiInstRef, *relocDataP);
                 }
                 break;
         }
@@ -148,16 +152,16 @@ size_t Overlay_Load(uintptr_t vromStart, uintptr_t vromEnd, void* vramStart, voi
     OverlayRelocationSection* ovlRelocs;
 
     if (gOverlayLogSeverity >= 3) {
-        // Start loading dynamic link function
-        // "\nダイナミックリンクファンクションのロードを開始します\n"
+        PRINTF(
+            T("\nダイナミックリンクファンクションのロードを開始します\n", "\nStart loading dynamic link function\n"));
     }
 
-    size = vromEnd - vromStart;
     end = (uintptr_t)allocatedRamAddr + size;
 
     if (gOverlayLogSeverity >= 3) {
-        // DMA transfer TEXT, DATA, RODATA+rel (%08x-%08x)
-        // "TEXT,DATA,RODATA+relをＤＭＡ転送します(%08x-%08x)\n"
+        PRINTF(T("TEXT,DATA,RODATA+relをＤＭＡ転送します(%08x-%08x)\n",
+                 "DMA transfer TEXT, DATA, RODATA+rel (%08x-%08x)\n"),
+               allocatedRamAddr, end);
     }
 
     DmaMgr_RequestSync(allocatedRamAddr, vromStart, size);
@@ -167,21 +171,22 @@ size_t Overlay_Load(uintptr_t vromStart, uintptr_t vromEnd, void* vramStart, voi
     ovlRelocs = (OverlayRelocationSection*)(end - ((s32*)end)[-1]);
 
     if (gOverlayLogSeverity >= 3) {
-        // "TEXT(%08x), DATA(%08x), RODATA(%08x), BSS(%08x)\n"
+        PRINTF("TEXT(%08x), DATA(%08x), RODATA(%08x), BSS(%08x)\n", ovlRelocs->textSize, ovlRelocs->dataSize,
+               ovlRelocs->rodataSize, (s32)ovlRelocs->bssSize);
     }
 
     if (gOverlayLogSeverity >= 3) {
-        // I will relocate
-        // "リロケーションします\n"
+        PRINTF(T("リロケーションします\n", "I will relocate\n"));
     }
 
     Overlay_Relocate(allocatedRamAddr, ovlRelocs, vramStart);
 
     if (ovlRelocs->bssSize != 0) {
         if (gOverlayLogSeverity >= 3) {
-            // Clear BSS area (%08x-%08x)
-            // "BSS領域をクリアします(%08x-%08x)\n"
+            PRINTF(T("BSS領域をクリアします(%08x-%08x)\n", "Clear BSS area (%08x-%08x)\n"), end,
+                   end + (s32)ovlRelocs->bssSize);
         }
+
         bzero((void*)end, ovlRelocs->bssSize);
     }
 
@@ -189,10 +194,9 @@ size_t Overlay_Load(uintptr_t vromStart, uintptr_t vromEnd, void* vramStart, voi
 
     osWritebackDCache(allocatedRamAddr, size);
     osInvalICache(allocatedRamAddr, size);
-
     if (gOverlayLogSeverity >= 3) {
-        // Finish loading the dynamic link function
-        // "ダイナミックリンクファンクションのロードを終了します\n\n"
+        PRINTF(T("ダイナミックリンクファンクションのロードを終了します\n\n",
+                 "Finish loading the dynamic link function\n\n"));
     }
 
     return size;
