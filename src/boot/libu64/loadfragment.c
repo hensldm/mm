@@ -25,6 +25,11 @@ s32 gFragmentLogSeverity = 2;
 // Extract MIPS jump target from an instruction word
 #define MIPS_JUMP_TARGET(insn) (((insn)&0x03FFFFFF) << 2)
 
+#if MM_VERSION < N64_US
+#undef PRINTF
+#define PRINTF osSyncPrintf
+#endif
+
 /**
  * Performs runtime relocation of overlay files, loadable code segments.
  *
@@ -66,7 +71,7 @@ void Fragment_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlRelo
     uintptr_t vramu32 = (uintptr_t)vramStart;
 
     if (gFragmentLogSeverity >= 3) {
-        // "DoRelocation(%08x, %08x, %08x)\n"
+        PRINTF("DoRelocation(%08x, %08x, %08x)\n", allocatedRamAddr, ovlRelocs, vramStart);
     }
 
     sections[RELOC_SECTION_NULL] = 0;
@@ -91,8 +96,7 @@ void Fragment_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlRelo
                 if ((*relocDataP & 0x0F000000) == 0) {
                     *relocDataP = *relocDataP - vramu32 + allocu32;
                 } else if (gFragmentLogSeverity >= 3) {
-                    // Segment pointer 32 %08x
-                    // "セグメントポインタ32です %08x\n"
+                    PRINTF(T("セグメントポインタ32です %08x\n", "Segment pointer 32 %08x\n"), *relocDataP - vramu32);
                 }
                 break;
 
@@ -106,8 +110,8 @@ void Fragment_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlRelo
                         (*relocDataP & 0xFC000000) |
                         (((PHYS_TO_K0(MIPS_JUMP_TARGET(*relocDataP)) - vramu32 + allocu32) & 0x0FFFFFFF) >> 2);
                 } else if (gFragmentLogSeverity >= 3) {
-                    // Segment pointer 26 %08x
-                    // "セグメントポインタ26です %08x\n"
+                    PRINTF(T("セグメントポインタ26です %08x\n", "Segment pointer 26 %08x\n"),
+                           PHYS_TO_K0(MIPS_JUMP_TARGET(*relocDataP)) - vramu32);
                 }
                 break;
 
@@ -137,8 +141,8 @@ void Fragment_Relocate(void* allocatedRamAddr, OverlayRelocationSection* ovlRelo
                     *luiInstRef = (*luiInstRef & 0xFFFF0000) | (((relocatedAddress >> 0x10) & 0xFFFF) + isLoNeg);
                     *relocDataP = (*relocDataP & 0xFFFF0000) | (relocatedAddress & 0xFFFF);
                 } else if (gFragmentLogSeverity >= 3) {
-                    // Segment pointer 16 %08x %08x %08x
-                    // "セグメントポインタ16です %08x %08x %08x"
+                    PRINTF(T("セグメントポインタ16です %08x %08x %08x\n", "Segment pointer 16 %08x %08x %08x\n"),
+                           ((*luiInstRef << 0x10) + (s16)*relocDataP) - vramu32, *luiInstRef, *relocDataP);
                 }
                 break;
         }
@@ -153,27 +157,32 @@ size_t Fragment_Load(uintptr_t vromStart, uintptr_t vromEnd, void* vramStart, vo
     OverlayRelocationSection* ovlRelocs;
 
     if (gFragmentLogSeverity >= 3) {
-        // Starting loading dynamic link function
-        // "\nダイナミックリンクファンクションのロードを開始します\n"
-    }
-    if (gFragmentLogSeverity >= 3) {
-        // DMA transfer TEXT, DATA, RODATA+rel (%08x-%08x)
-        // "TEXT,DATA,RODATA+relをＤＭＡ転送します(%08x-%08x)\n"
+        PRINTF(
+            T("\nダイナミックリンクファンクションのロードを開始します\n", "\nStart loading dynamic link function\n"));
     }
 
     end = (uintptr_t)allocatedRamAddr + size;
+
+    if (gFragmentLogSeverity >= 3) {
+        PRINTF(T("TEXT,DATA,RODATA+relをＤＭＡ転送します(%08x-%08x)\n",
+                 "DMA transfer TEXT, DATA, RODATA+rel (%08x-%08x)\n"),
+               allocatedRamAddr, end);
+    }
+
     DmaMgr_RequestSync(allocatedRamAddr, vromStart, size);
 
     ovlRelocs = (OverlayRelocationSection*)(end - ((s32*)end)[-1]);
 
     if (gFragmentLogSeverity >= 3) {
-        // "TEXT(%08x), DATA(%08x), RODATA(%08x), BSS(%08x)\n"
+        PRINTF("TEXT(%08x), DATA(%08x), RODATA(%08x), BSS(%08x)\n", ovlRelocs->textSize, ovlRelocs->dataSize,
+               ovlRelocs->rodataSize, (s32)ovlRelocs->bssSize);
     }
 
     if (allocatedBytes < ovlRelocs->bssSize + size) {
-        if (gFragmentLogSeverity >= 3) {
-            // ramSize is too small (ramSize=%08x, NeedRamSize=%08x)
-            // "ramSizeが小さすぎます(ramSize=%08x, NeedRamSize=%08x)\n"
+        if (gFragmentLogSeverity >= 2) {
+            PRINTF(T("ramSizeが小さすぎます(ramSize=%08x, NeedRamSize=%08x)\n",
+                     "ramSize is too small (ramSize=%08x, NeedRamSize=%08x)\n"),
+                   allocatedBytes, ovlRelocs->bssSize + size);
         }
         return 0;
     }
@@ -181,16 +190,15 @@ size_t Fragment_Load(uintptr_t vromStart, uintptr_t vromEnd, void* vramStart, vo
     allocatedBytes = ovlRelocs->bssSize + size;
 
     if (gFragmentLogSeverity >= 3) {
-        // I will relocate
-        // "リロケーションします\n"
+        PRINTF(T("リロケーションします\n", "I will relocate\n"));
     }
 
     Fragment_Relocate(allocatedRamAddr, ovlRelocs, vramStart);
 
     if (ovlRelocs->bssSize != 0) {
         if (gFragmentLogSeverity >= 3) {
-            // Clear BSS area (%08x-%08x)
-            // "BSS領域をクリアします(%08x-%08x)\n"
+            PRINTF(T("BSS領域をクリアします(%08x-%08x)\n", "Clear BSS area (%08x-%08x)\n"), end,
+                   end + (s32)ovlRelocs->bssSize);
         }
         bzero((void*)end, ovlRelocs->bssSize);
     }
@@ -199,8 +207,8 @@ size_t Fragment_Load(uintptr_t vromStart, uintptr_t vromEnd, void* vramStart, vo
     osInvalICache(allocatedRamAddr, allocatedBytes);
 
     if (gFragmentLogSeverity >= 3) {
-        // Finish loading the dynamic link function
-        // "ダイナミックリンクファンクションのロードを終了します\n\n"
+        PRINTF(T("ダイナミックリンクファンクションのロードを終了します\n\n",
+                 "Finish loading the dynamic link function\n\n"));
     }
 
     return allocatedBytes;
@@ -215,28 +223,29 @@ void* Fragment_AllocateAndLoad(uintptr_t vromStart, uintptr_t vromEnd, void* vra
     size_t allocatedBytes;
 
     if (gFragmentLogSeverity >= 3) {
-        // Start loading dynamic link function
-        // "\nダイナミックリンクファンクションのロードを開始します\n"
-
-        // "LoadFragment(%08x, %08x, %08x)\n"
+        PRINTF(
+            T("\nダイナミックリンクファンクションのロードを開始します\n", "\nStart loading dynamic link function\n"));
+        PRINTF("LoadFragment(%08x, %08x, %08x)\n", vromStart, vromEnd, vramStart);
     }
 
     allocatedRamAddr = malloc_r(size);
     end = (uintptr_t)allocatedRamAddr + size;
 
     if (gFragmentLogSeverity >= 3) {
-        // DMA transfer TEXT, DATA, RODATA+rel (%08x-%08x)
-        // "TEXT,DATA,RODATA+relをＤＭＡ転送します(%08x-%08x)\n"
+        PRINTF(T("TEXT,DATA,RODATA+relをＤＭＡ転送します(%08x-%08x)\n",
+                 "DMA transfer TEXT, DATA, RODATA+rel (%08x-%08x)\n"),
+               allocatedRamAddr, end);
     }
 
     DmaMgr_RequestSync(allocatedRamAddr, vromStart, size);
 
-    if (gFragmentLogSeverity >= 3) {
-        // "TEXT(%08x), DATA(%08x), RODATA(%08x), BSS(%08x)\n"
-    }
-
     ovlOffset = end - sizeof(s32);
     ovlRelocs = (OverlayRelocationSection*)(end - ((s32*)end)[-1]);
+
+    if (gFragmentLogSeverity >= 3) {
+        PRINTF("TEXT(%08x), DATA(%08x), RODATA(%08x), BSS(%08x)\n", ovlRelocs->textSize, ovlRelocs->dataSize,
+               ovlRelocs->rodataSize, (s32)ovlRelocs->bssSize);
+    }
 
     //! FAKE:
     if (1) {}
@@ -246,14 +255,12 @@ void* Fragment_AllocateAndLoad(uintptr_t vromStart, uintptr_t vromEnd, void* vra
     allocatedRamAddr = realloc(allocatedRamAddr, allocatedBytes);
 
     if (gFragmentLogSeverity >= 3) {
-        // No reallocation.
-        // "リアロケーションしません。\n"
+        PRINTF(T("リアロケーションしません。\n", "No reallocation\n"));
     }
 
     if (allocatedRamAddr == NULL) {
-        if (gFragmentLogSeverity >= 3) {
-            // Reallocation failed. .
-            // "リアロケーションに失敗しました。"
+        if (gFragmentLogSeverity >= 2) {
+            PRINTF(T("リアロケーションに失敗しました。", "Reallocation failed"));
         }
         return allocatedRamAddr;
     }
@@ -262,25 +269,25 @@ void* Fragment_AllocateAndLoad(uintptr_t vromStart, uintptr_t vromEnd, void* vra
     ovlRelocs = (OverlayRelocationSection*)(end - *(uintptr_t*)ovlOffset);
 
     if (gFragmentLogSeverity >= 3) {
-        // I will relocate
-        // "リロケーションします\n"
+        PRINTF(T("リロケーションします\n", "I will relocate\n"));
     }
 
     Fragment_Relocate(allocatedRamAddr, ovlRelocs, vramStart);
 
     if (ovlRelocs->bssSize != 0) {
         if (gFragmentLogSeverity >= 3) {
-            // Clear BSS area (%08x-%08x)
-            // "BSS領域をクリアします(%08x-%08x)\n"
+            PRINTF(T("BSS領域をクリアします(%08x-%08x)\n", "Clear BSS area (%08x-%08x)\n"), end,
+                   end + (s32)ovlRelocs->bssSize);
         }
+
         bzero((void*)end, ovlRelocs->bssSize);
     }
 
     osInvalICache(allocatedRamAddr, allocatedBytes);
 
     if (gFragmentLogSeverity >= 3) {
-        // Finish loading the dynamic link function
-        // "ダイナミックリンクファンクションのロードを終了します\n\n"
+        PRINTF(T("ダイナミックリンクファンクションのロードを終了します\n\n",
+                 "Finish loading the dynamic link function\n\n"));
     }
 
     return allocatedRamAddr;
