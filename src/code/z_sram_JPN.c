@@ -6,8 +6,6 @@
 #include "overlays/gamestates/ovl_file_choose/z_file_select.h"
 
 void Sram_SyncWriteToFlash(SramContext* sramCtx, s32 curPage, s32 numPages);
-void func_80147314(SramContext* sramCtx, s32 fileNum);
-void func_80147414(SramContext* sramCtx, s32 fileNum, s32 arg2);
 
 #define CHECK_NEWF(newf)                                                                                 \
     ((newf)[0] != 'Z' || (newf)[1] != 'E' || (newf)[2] != 'L' || (newf)[3] != 'D' || (newf)[4] != 'A' || \
@@ -1319,7 +1317,6 @@ void Sram_OpenSave(FileSelectState* fileSelect, SramContext* sramCtx) {
         }
 
         fileNum = gSaveContext.fileNum;
-        func_80147314(sramCtx, fileNum);
     }
 }
 
@@ -1684,10 +1681,6 @@ void Sram_EraseSave(FileSelectState* fileSelect2, SramContext* sramCtx, s32 file
     s32 pad;
 
     if (gSaveContext.flashSaveAvailable) {
-        if (fileSelect->isOwlSave[fileNum + 2]) {
-            func_80147314(sramCtx, fileNum);
-            fileSelect->isOwlSave[fileNum + 2] = false;
-        }
         bzero(sramCtx->saveBuf, SAVE_BUFFER_SIZE);
         Lib_MemCpy(&gSaveContext, sramCtx->saveBuf, sizeof(Save));
     }
@@ -1702,38 +1695,6 @@ void Sram_CopySave(FileSelectState* fileSelect2, SramContext* sramCtx) {
     s16 maskCount;
 
     if (gSaveContext.flashSaveAvailable) {
-        if (fileSelect->isOwlSave[fileSelect->selectedFileIndex + 2]) {
-            func_80147414(sramCtx, fileSelect->selectedFileIndex, fileSelect->copyDestFileIndex);
-            fileSelect->threeDayResetCount[fileSelect->copyDestFileIndex + 2] =
-                gSaveContext.save.saveInfo.playerData.threeDayResetCount;
-
-            for (i = 0; i < ARRAY_COUNT(gSaveContext.save.saveInfo.playerData.playerName); i++) {
-                fileSelect->fileNames[fileSelect->copyDestFileIndex + 2][i] =
-                    gSaveContext.save.saveInfo.playerData.playerName[i];
-            }
-
-            fileSelect->healthCapacity[fileSelect->copyDestFileIndex + 2] =
-                gSaveContext.save.saveInfo.playerData.healthCapacity;
-            fileSelect->health[fileSelect->copyDestFileIndex + 2] = gSaveContext.save.saveInfo.playerData.health;
-            fileSelect->defenseHearts[fileSelect->copyDestFileIndex + 2] =
-                gSaveContext.save.saveInfo.inventory.defenseHearts;
-            fileSelect->questItems[fileSelect->copyDestFileIndex + 2] = gSaveContext.save.saveInfo.inventory.questItems;
-            fileSelect->time[fileSelect->copyDestFileIndex + 2] = CURRENT_TIME;
-            fileSelect->day[fileSelect->copyDestFileIndex + 2] = gSaveContext.save.day;
-            fileSelect->isOwlSave[fileSelect->copyDestFileIndex + 2] = gSaveContext.save.isOwlSave;
-            fileSelect->rupees[fileSelect->copyDestFileIndex + 2] = gSaveContext.save.saveInfo.playerData.rupees;
-            fileSelect->walletUpgrades[fileSelect->copyDestFileIndex + 2] = CUR_UPG_VALUE(UPG_WALLET);
-
-            for (i = 0, maskCount = 0; i < MASK_NUM_SLOTS; i++) {
-                if (gSaveContext.save.saveInfo.inventory.items[i + ITEM_NUM_SLOTS] != ITEM_NONE) {
-                    maskCount++;
-                }
-            }
-
-            fileSelect->maskCount[fileSelect->copyDestFileIndex + 2] = maskCount;
-            fileSelect->heartPieceCount[fileSelect->copyDestFileIndex + 2] = GET_QUEST_HEART_PIECE_COUNT;
-        }
-
         // clear buffer
         bzero(sramCtx->saveBuf, SAVE_BUFFER_SIZE);
         // read to buffer
@@ -1929,10 +1890,21 @@ void Sram_UpdateWriteToFlashDefault(SramContext* sramCtx) {
     if (sramCtx->status == 2) {
         if (SysFlashrom_IsBusy() != 0) {          // if task running
             if (SysFlashrom_AwaitResult() == 0) { // wait for task done
+                SysFlashrom_WriteAsync(sramCtx->saveBuf, sramCtx->curPage + 0x200, sramCtx->numPages);
+                // task success
+                sramCtx->status = 3;
+            } else {
+                // task failure
+                SysFlashrom_WriteAsync(sramCtx->saveBuf, sramCtx->curPage + 0x200, sramCtx->numPages);
+                sramCtx->status = 3;
+            }
+        }
+    } else if (sramCtx->status == 3) {
+        if (SysFlashrom_IsBusy() != 0) {
+            if (SysFlashrom_AwaitResult() == 0) { // wait for task done
                 // task success
                 sramCtx->status = 4;
             } else {
-                // task failure
                 sramCtx->status = 4;
             }
         }
@@ -1940,102 +1912,6 @@ void Sram_UpdateWriteToFlashDefault(SramContext* sramCtx) {
         // Finished status is hardcoded to 2 seconds instead of when the task finishes
         sramCtx->status = 0;
     }
-}
-
-void Sram_SetFlashPagesOwlSave(SramContext* sramCtx, s32 curPage, s32 numPages) {
-    sramCtx->curPage = curPage;
-    sramCtx->numPages = numPages;
-    sramCtx->status = 6;
-}
-
-void Sram_StartWriteToFlashOwlSave(SramContext* sramCtx) {
-    SysFlashrom_WriteAsync(sramCtx->saveBuf, sramCtx->curPage, sramCtx->numPages);
-
-    sramCtx->startWriteOsTime = osGetTime();
-    sramCtx->status = 7;
-}
-
-void Sram_UpdateWriteToFlashOwlSave(SramContext* sramCtx) {
-    if (sramCtx->status == 7) {
-        if (SysFlashrom_IsBusy() != 0) {          // Is task running
-            if (SysFlashrom_AwaitResult() == 0) { // Wait for task done
-                SysFlashrom_WriteAsync(sramCtx->saveBuf, sramCtx->curPage + 0x80, sramCtx->numPages);
-                sramCtx->status = 8;
-            } else {
-                SysFlashrom_WriteAsync(sramCtx->saveBuf, sramCtx->curPage + 0x80, sramCtx->numPages);
-                sramCtx->status = 8;
-            }
-        }
-    } else if (sramCtx->status == 8) {
-        if (SysFlashrom_IsBusy() != 0) {          // Is task running
-            if (SysFlashrom_AwaitResult() == 0) { // Wait for task done
-                sramCtx->status = 4;
-            } else {
-                sramCtx->status = 4;
-            }
-        }
-    } else if (OSTIME_TO_TIMER(osGetTime() - sramCtx->startWriteOsTime) >= SECONDS_TO_TIMER(2)) {
-        // Finished status is hardcoded to 2 seconds instead of when the task finishes
-        sramCtx->status = 0;
-        bzero(sramCtx->saveBuf, SAVE_BUFFER_SIZE);
-        gSaveContext.save.isOwlSave = false;
-        gSaveContext.save.saveInfo.checksum = 0;
-        // flash read to buffer then copy to save context
-        SysFlashrom_Read(sramCtx->saveBuf, sramCtx->curPage, sramCtx->numPages);
-        Lib_MemCpy(&gSaveContext, sramCtx->saveBuf, offsetof(SaveContext, fileNum));
-    }
-}
-
-void func_80147314(SramContext* sramCtx, s32 fileNum) {
-    s32 pad;
-
-    gSaveContext.save.isOwlSave = false;
-
-    gSaveContext.save.saveInfo.playerData.newf[0] = '\0';
-    gSaveContext.save.saveInfo.playerData.newf[1] = '\0';
-    gSaveContext.save.saveInfo.playerData.newf[2] = '\0';
-    gSaveContext.save.saveInfo.playerData.newf[3] = '\0';
-    gSaveContext.save.saveInfo.playerData.newf[4] = '\0';
-    gSaveContext.save.saveInfo.playerData.newf[5] = '\0';
-
-    gSaveContext.save.saveInfo.checksum = 0;
-    gSaveContext.save.saveInfo.checksum = Sram_CalcChecksum(&gSaveContext, offsetof(SaveContext, fileNum));
-
-    Lib_MemCpy(sramCtx->saveBuf, &gSaveContext, offsetof(SaveContext, fileNum));
-    Sram_SyncWriteToFlash(sramCtx, gFlashOwlSaveStartPages[fileNum * 2], gFlashOwlSaveNumPages[fileNum * 2]);
-    //! Note: should be `gFlashOwlSaveNumPages[fileNum * 2 + 1]`?
-    Sram_SyncWriteToFlash(sramCtx, gFlashOwlSaveStartPages[fileNum * 2 + 1], gFlashOwlSaveNumPages[fileNum * 2]);
-
-    gSaveContext.save.isOwlSave = true;
-
-    gSaveContext.save.saveInfo.playerData.newf[0] = 'Z';
-    gSaveContext.save.saveInfo.playerData.newf[1] = 'E';
-    gSaveContext.save.saveInfo.playerData.newf[2] = 'L';
-    gSaveContext.save.saveInfo.playerData.newf[3] = 'D';
-    gSaveContext.save.saveInfo.playerData.newf[4] = 'A';
-    gSaveContext.save.saveInfo.playerData.newf[5] = '3';
-}
-
-// Used by `Sram_CopySave` with `isOwlSave` set
-void func_80147414(SramContext* sramCtx, s32 fileNum, s32 arg2) {
-    s32 pad;
-
-    // Clear save buffer
-    bzero(sramCtx->saveBuf, SAVE_BUFFER_SIZE);
-
-    // Read save file
-    if (SysFlashrom_Read(sramCtx->saveBuf, gFlashOwlSaveStartPages[fileNum * 2], gFlashOwlSaveNumPages[fileNum * 2]) !=
-        0) {
-        // If failed, read backup save file
-        SysFlashrom_Read(sramCtx->saveBuf, gFlashOwlSaveStartPages[fileNum * 2 + 1],
-                         gFlashOwlSaveNumPages[fileNum * 2 + 1]);
-    }
-
-    // Copy buffer to save context
-    Lib_MemCpy(&gSaveContext, sramCtx->saveBuf, offsetof(SaveContext, fileNum));
-
-    Sram_SyncWriteToFlash(sramCtx, gFlashOwlSaveStartPages[arg2 * 2], gFlashOwlSaveNumPages[arg2 * 2]);
-    Sram_SyncWriteToFlash(sramCtx, gFlashOwlSaveStartPages[arg2 * 2 + 1], gFlashOwlSaveNumPages[arg2 * 2]);
 }
 
 void Sram_nop8014750C(UNK_TYPE4 arg0) {

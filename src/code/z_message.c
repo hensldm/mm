@@ -6060,11 +6060,13 @@ void Message_Update(PlayState* play) {
             Play_SaveCycleSceneFlags(play);
             func_8014546C(&play->sramCtx);
 
+#if VERSION >= N64_US
             if (gSaveContext.fileNum != 0xFF) {
                 Sram_SetFlashPagesOwlSave(&play->sramCtx, gFlashOwlSaveStartPages[gSaveContext.fileNum * 2],
                                           gFlashOwlSaveNumPages[gSaveContext.fileNum * 2]);
                 Sram_StartWriteToFlashOwlSave(&play->sramCtx);
             }
+#endif
             msgCtx->msgMode = MSGMODE_OWL_SAVE_1;
             break;
 

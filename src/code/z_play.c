@@ -1052,11 +1052,15 @@ void Play_UpdateMain(PlayState* this) {
                        this->state.gfxCtx);
 
     if (this->sramCtx.status != 0) {
+#if VERSION >= N64_US
         if (gSaveContext.save.isOwlSave) {
             Sram_UpdateWriteToFlashOwlSave(&this->sramCtx);
         } else {
             Sram_UpdateWriteToFlashDefault(&this->sramCtx);
         }
+#else
+        Sram_UpdateWriteToFlashDefault(&this->sramCtx);
+#endif
     }
 }
 
