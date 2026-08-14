@@ -470,16 +470,13 @@ void Scene_CommandEchoSetting(PlayState* play, SceneCmd* cmd) {
 
 // SceneTableEntry Header Command 0x18: Alternate Header List
 void Scene_CommandAltHeaderList(PlayState* play, SceneCmd* cmd) {
-    SceneCmd** altHeaderList;
-    SceneCmd* altHeader;
-
     if (gSaveContext.sceneLayer != 0) {
-        altHeaderList = Lib_SegmentedToVirtual(cmd->altHeaders.segment);
-        altHeader = altHeaderList[gSaveContext.sceneLayer - 1];
+        SceneCmd* altHeader =
+            ((SceneCmd**)Lib_SegmentedToVirtual(cmd->altHeaders.segment))[gSaveContext.sceneLayer - 1];
 
         if (altHeader != NULL) {
             Scene_ExecuteCommands(play, Lib_SegmentedToVirtual(altHeader));
-            (cmd + 1)->base.code = 0x14;
+            (cmd + 1)->base.code = SCENE_CMD_ID_END;
         }
     }
 }
