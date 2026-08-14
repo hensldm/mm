@@ -433,14 +433,14 @@ void Scene_CommandTimeSettings(PlayState* play, SceneCmd* cmd) {
 
 // SceneTableEntry Header Command 0x05: Wind Settings
 void Scene_CommandWindSettings(PlayState* play, SceneCmd* cmd) {
-    s8 temp1 = cmd->windSettings.west;
-    s8 temp2 = cmd->windSettings.vertical;
-    s8 temp3 = cmd->windSettings.south;
+    s8 x = cmd->windSettings.x;
+    s8 y = cmd->windSettings.y;
+    s8 z = cmd->windSettings.z;
 
-    play->envCtx.windDirection.x = temp1;
-    play->envCtx.windDirection.y = temp2;
-    play->envCtx.windDirection.z = temp3;
-    play->envCtx.windSpeed = cmd->windSettings.clothIntensity;
+    play->envCtx.windDirection.x = x;
+    play->envCtx.windDirection.y = y;
+    play->envCtx.windDirection.z = z;
+    play->envCtx.windSpeed = cmd->windSettings.speed;
 }
 
 // SceneTableEntry Header Command 0x13: Exit List
