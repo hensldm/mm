@@ -195,12 +195,9 @@ void Scene_CommandActorCutsceneCamList(PlayState* play, SceneCmd* cmd) {
 
 // SceneTableEntry Header Command 0x03: Collision Header
 void Scene_CommandCollisionHeader(PlayState* play, SceneCmd* cmd) {
-    CollisionHeader* colHeaderTemp;
-    CollisionHeader* colHeader;
+    CollisionHeader* colHeader = Lib_SegmentedToVirtual(cmd->colHeader.segment);
 
-    colHeaderTemp = Lib_SegmentedToVirtual(cmd->colHeader.segment);
-    colHeader = colHeaderTemp;
-    colHeader->vtxList = Lib_SegmentedToVirtual(colHeaderTemp->vtxList);
+    colHeader->vtxList = Lib_SegmentedToVirtual(colHeader->vtxList);
     colHeader->polyList = Lib_SegmentedToVirtual(colHeader->polyList);
 
     if (colHeader->surfaceTypeList != NULL) {
