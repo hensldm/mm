@@ -90,7 +90,7 @@ void Object_UpdateEntries(ObjectContext* objectCtx) {
                     DmaMgr_RequestAsync(&entry->dmaReq, entry->segment, objectFile->vromStart, size, 0,
                                         &entry->loadQueue, NULL);
                 }
-            } else if (!osRecvMesg(&entry->loadQueue, NULL, OS_MESG_NOBLOCK)) {
+            } else if (osRecvMesg(&entry->loadQueue, NULL, OS_MESG_NOBLOCK) == 0) {
                 entry->id = id;
             }
         }
