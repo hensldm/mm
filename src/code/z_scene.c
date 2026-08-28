@@ -137,21 +137,17 @@ void Object_LoadAll(ObjectContext* objectCtx) {
 }
 
 void* func_8012F73C(ObjectContext* objectCtx, s32 slot, s16 id) {
-    u32 addr;
-    uintptr_t vromSize;
-    RomFile* fileTableEntry;
+    ObjectEntry* entry = &objectCtx->slots[slot];
+    RomFile* objectFile = &gObjectTable[id];
+    u32 size;
+    void* nextPtr;
 
-    objectCtx->slots[slot].id = -id;
-    objectCtx->slots[slot].dmaReq.vromAddr = 0;
+    entry->id = -id;
+    entry->dmaReq.vromAddr = 0;
+    size = objectFile->vromEnd - objectFile->vromStart;
+    nextPtr = (void*)ALIGN16((uintptr_t)entry->segment + size);
 
-    fileTableEntry = &gObjectTable[id];
-    vromSize = fileTableEntry->vromEnd - fileTableEntry->vromStart;
-
-    // TODO: UB to cast void to u32
-    addr = ((u32)objectCtx->slots[slot].segment) + vromSize;
-    addr = ALIGN16(addr);
-
-    return (void*)addr;
+    return nextPtr;
 }
 
 // SceneTableEntry Header Command 0x00: Spawn List
