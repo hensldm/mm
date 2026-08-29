@@ -13,7 +13,7 @@
 #define ALIGNED(x) __attribute__ ((aligned (x)))
 #endif
 
-#ifdef __sgi /* IDO compiler */
+#if (__sgi && !__GNUC__ && !M2CTX && !PERMUTER) /* IDO compiler */
 #define UNALIGNED __unaligned
 #else
 #define UNALIGNED
