@@ -36,6 +36,7 @@ CLEAR_EVENTINF_ALT = "int"
 ".+REG" = "int"
 SET_FULLSCREEN_VIEWPORT_DYNAMIC = "void"
 gDrawRect = "void"
+PRINTF = "void"
 
 [decompme.compilers]
 "tools/ido_recomp/linux/7.1/cc" = "ido7.1"

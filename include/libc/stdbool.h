@@ -5,7 +5,9 @@
 
 #ifndef __cplusplus
 
-#if (__STDC_VERSION__ >= 202311L)
+#if PERMUTER
+#define bool    int
+#elif (__STDC_VERSION__ >= 202311L)
 // bool is a type in C23, do not define it
 #elif (__STDC_VERSION__ >= 199901L)
 #define bool    _Bool
