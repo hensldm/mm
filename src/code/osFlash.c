@@ -13,6 +13,7 @@ OSMesg __osFlashMsgBuf[1];
 s32 __osFlashVersion;
 static s32 sBssPad[5];
 
+#if MM_VERSION >= N64_US
 uintptr_t osFlashGetAddr(u32 pageNum) {
     uintptr_t addr;
 
@@ -25,6 +26,7 @@ uintptr_t osFlashGetAddr(u32 pageNum) {
 
     return addr;
 }
+#endif
 
 OSPiHandle* osFlashReInit(u8 latency, u8 pulse, u8 pageSize, u8 relDuration, u32 start) {
     __osFlashHandler.baseAddress = PHYS_TO_K1(start);
@@ -159,6 +161,7 @@ s32 osFlashAllErase(void) {
     }
 }
 
+#if MM_VERSION >= N64_US
 void osFlashAllEraseThrough(void) {
     // start chip erase operation
     osEPiWriteIo(&__osFlashHandler, __osFlashHandler.baseAddress | FLASH_CMD_REG, FLASH_CMD_CHIP_ERASE);
@@ -184,6 +187,7 @@ s32 osFlashCheckEraseEnd(void) {
         return FLASH_STATUS_ERASE_ERROR;
     }
 }
+#endif
 
 s32 osFlashSectorErase(u32 pageNum) {
     u32 status;
@@ -214,11 +218,13 @@ s32 osFlashSectorErase(u32 pageNum) {
     }
 }
 
+#if MM_VERSION >= N64_US
 void osFlashSectorEraseThrough(u32 pageNum) {
     // start sector erase operation
     osEPiWriteIo(&__osFlashHandler, __osFlashHandler.baseAddress | FLASH_CMD_REG, FLASH_CMD_SECTOR_ERASE | pageNum);
     osEPiWriteIo(&__osFlashHandler, __osFlashHandler.baseAddress | FLASH_CMD_REG, FLASH_CMD_EXECUTE_ERASE);
 }
+#endif
 
 s32 osFlashWriteBuffer(OSIoMesg* mb, s32 priority, void* dramAddr, OSMesgQueue* mq) {
     s32 ret;
@@ -274,8 +280,10 @@ s32 osFlashWriteArray(u32 pageNum) {
 s32 osFlashReadArray(OSIoMesg* mb, s32 priority, u32 pageNum, void* dramAddr, u32 pageCount, OSMesgQueue* mq) {
     s32 ret;
     u32 dummy;
+#if MM_VERSION >= N64_US
     u32 last_page;
     u32 pages;
+#endif
 
     // select read array mode
     osEPiWriteIo(&__osFlashHandler, __osFlashHandler.baseAddress | FLASH_CMD_REG, FLASH_CMD_READ_ARRAY);
@@ -288,6 +296,7 @@ s32 osFlashReadArray(OSIoMesg* mb, s32 priority, u32 pageNum, void* dramAddr, u3
     mb->hdr.retQueue = mq;
     mb->dramAddr = dramAddr;
 
+#if MM_VERSION >= N64_US
     last_page = pageNum + pageCount - 1;
 
     if ((last_page & 0xF00) != (pageNum & 0xF00)) {
@@ -311,9 +320,16 @@ s32 osFlashReadArray(OSIoMesg* mb, s32 priority, u32 pageNum, void* dramAddr, u3
         pageNum += 256;
         mb->dramAddr = (void*)((uintptr_t)mb->dramAddr + mb->size);
     }
+#endif
 
     mb->size = pageCount * FLASH_BLOCK_SIZE;
+
+#if MM_VERSION >= N64_US
     mb->devAddr = osFlashGetAddr(pageNum);
+#else
+    mb->devAddr = (__osFlashVersion == OLD_FLASH) ? pageNum * (FLASH_BLOCK_SIZE >> 1) : pageNum * FLASH_BLOCK_SIZE;
+#endif
+
     ret = osEPiStartDma(&__osFlashHandler, mb, OS_READ);
 
     return ret;
