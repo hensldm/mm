@@ -44,9 +44,10 @@ extern u8 gSequenceTable[];
 extern AudioTable gSampleBankTable;
 
 // bss
-
+#if MM_VERSION >= N64_US
 extern u64* gAudioSPDataPtr;
 extern u32 gAudioSPDataSize;
+#endif
 
 // other segments
 extern Mtx D_01000000;

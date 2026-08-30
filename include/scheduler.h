@@ -53,8 +53,11 @@ typedef struct Scheduler {
 void Sched_FlushTaskQueue(void);
 
 void Sched_SendNotifyMsg(Scheduler* sched);
+
+#if MM_VERSION >= N64_US
 void Sched_SendAudioCancelMsg(Scheduler* sched);
 void Sched_SendGfxCancelMsg(Scheduler* sched);
+#endif
 
 void Sched_Init(Scheduler* sched, void* stack, OSPri pri, u8 viModeType, UNK_TYPE arg4, IrqMgr* irqMgr);
 
