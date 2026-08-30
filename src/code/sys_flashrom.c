@@ -2,6 +2,7 @@
 
 #include "libc64/malloc.h"
 #include "PR/os_internal_flash.h"
+#include "line_numbers.h"
 
 #include "fault.h"
 #include "macros.h"
@@ -60,9 +61,15 @@ s32 SysFlashrom_CheckFlashType(void) {
             (flashVendor == FLASH_VERSION_MX_B_AND_D)) {
             return 0;
         } else {
+            PRINTF(T("未知のフラッシュロム？ flash_maker=%08x\n", "Unknown flash ROM? flash_maker=%08x\n"),
+                   flashVendor);
             return -1;
         }
     }
+
+    PRINTF(T("１Ｍフラッシュロムではない？ flash_type=%08x flash_maker=%08x\n",
+             "Is it not a 1MB flash ROM? flash_type=%08x flash_maker=%08x\n"),
+           flashType, flashVendor);
     return -1;
 }
 
@@ -80,6 +87,8 @@ s32 SysFlashrom_InitFlash(void) {
 s32 SysFlashrom_Read(void* addr, u32 pageNum, u32 pageCount) {
     OSIoMesg msg;
 
+    PRINTF("sFRm_FlashReadArray(%08x, %u, %u)\n", addr, pageNum, pageCount);
+
     if (!SysFlashrom_IsInit()) {
         return -1;
     }
@@ -90,6 +99,8 @@ s32 SysFlashrom_Read(void* addr, u32 pageNum, u32 pageCount) {
 }
 
 s32 SysFlashrom_EraseSector(u32 page) {
+    PRINTF("sFRm_FlashSectorErase(%u)\n", page);
+
     if (!SysFlashrom_IsInit()) {
         return -1;
     }
@@ -101,15 +112,18 @@ s32 SysFlashrom_ExecWrite(void* addr, u32 pageNum, u32 pageCount) {
     s32 result;
     u32 i;
 
+    PRINTF("sFRm_FlashWriteArray1(%08x, %u, %u)\n", addr, pageNum, pageCount);
+
     if (!SysFlashrom_IsInit()) {
         return -1;
     }
     // Ensure the page is always aligned to a sector boundary.
     if ((pageNum % FLASH_BLOCK_SIZE) != 0) {
-        Fault_AddHungupAndCrash("../sys_flashrom.c", 275);
+        Fault_AddHungupAndCrash("../sys_flashrom.c", LN1(266, 275));
     }
     osWritebackDCache(addr, pageCount * FLASH_BLOCK_SIZE);
     for (i = 0; i < pageCount; i++) {
+        PRINTF("1MFLASH %d page writing\n", i);
         osFlashWriteBuffer(&msg, OS_MESG_PRI_NORMAL, (u8*)addr + i * FLASH_BLOCK_SIZE, &sFlashromMesgQueue);
         osRecvMesg(&sFlashromMesgQueue, NULL, OS_MESG_BLOCK);
         result = osFlashWriteArray(pageNum + i);
@@ -117,12 +131,16 @@ s32 SysFlashrom_ExecWrite(void* addr, u32 pageNum, u32 pageCount) {
             return result;
         }
     }
+
+    PRINTF("\n1MFLASH write OK!!\n");
     return 0;
 }
 
 s32 SysFlashrom_AttemptWrite(void* addr, u32 pageNum, u32 pageCount) {
     s32 result;
     s32 i;
+
+    PRINTF("sFRm_FlashWriteArray(%08x, %u, %u)\n", addr, pageNum, pageCount);
 
     if (!SysFlashrom_IsInit()) {
         return -1;
@@ -133,6 +151,7 @@ failRetry:
     result = SysFlashrom_EraseSector(pageNum);
     if (result != 0) {
         if (i < 3) {
+            PRINTF("\n1MFLASH erase error\n");
             i++;
             goto failRetry;
         }
@@ -141,6 +160,7 @@ failRetry:
     result = SysFlashrom_ExecWrite(addr, pageNum, pageCount);
     if (result != 0) {
         if (i < 3) {
+            PRINTF("\n1MFLASH write error\n");
             i++;
             goto failRetry;
         }
@@ -174,23 +194,33 @@ s32 SysFlashrom_Write(void* addr, u32 pageNum, u32 pageCount) {
     size = pageCount * FLASH_BLOCK_SIZE;
     data = malloc(size);
     if (data == NULL) {
+        PRINTF(T("メモリが確保できなかったので通常の書き込みをします\n",
+                 "Since memory could not be allocated, a normal write operation will be performed\n"));
         ret = SysFlashrom_AttemptWrite(addr, pageNum, pageCount);
     } else {
+        PRINTF(T("書き込もうとする領域を読込みます\n", "Reads the area to be written to\n"));
         SysFlashrom_Read(data, pageNum, pageCount);
         if (bcmp(data, addr, size) == 0) {
+            PRINTF(T("内容が一致しました\n", "The content matched\n"));
             ret = 0;
         } else {
+            PRINTF(T("内容が一致しせんでした\n", "The content did not match\n"));
             // Will always erase the sector even if it wouldn't normally need to.
             if (SysFlashrom_NeedsToErase(data, addr, pageCount)) {
+                PRINTF(T("消去せずに更新が可能です\n", "It is possible to update without deleting the data.\n"));
                 ret = SysFlashrom_AttemptWrite(addr, pageNum, pageCount);
             } else {
+                PRINTF(T("消去せずに更新が不可能です\n", "It is not possible to update without deleting the data\n"));
                 ret = SysFlashrom_AttemptWrite(addr, pageNum, pageCount);
             }
             if (ret == 0) {
+                PRINTF(T("ベリファイします\n", "Verify\n"));
                 SysFlashrom_Read(data, pageNum, pageCount);
                 if (bcmp(data, addr, size) == 0) {
+                    PRINTF(T("ベリファイＯＫ\n", "Verification ok\n"));
                     ret = 0;
                 } else {
+                    PRINTF(T("ベリファイＮＧ\n", "Verification failed\n"));
                     ret = -1;
                 }
             }
@@ -203,6 +233,8 @@ s32 SysFlashrom_Write(void* addr, u32 pageNum, u32 pageCount) {
 void SysFlashrom_ThreadEntry(void* arg) {
     FlashromRequest* req = (FlashromRequest*)arg;
 
+    PRINTF(T("sys_flashromスレッド実行開始\n", "sys_flashrom thread execution started\n"));
+
     switch (req->type) {
         case FLASHROM_REQUEST_WRITE:
             req->response = SysFlashrom_Write(req->addr, req->pageNum, req->pageCount);
@@ -214,6 +246,8 @@ void SysFlashrom_ThreadEntry(void* arg) {
             osSendMesg(&req->queue, (OSMesg)req->response, OS_MESG_BLOCK);
             break;
     }
+
+    PRINTF(T("sys_flashromスレッド実行終了\n", "sys_flashrom thread execution finished\n"));
 }
 
 void SysFlashrom_WriteAsync(void* addr, u32 pageNum, u32 pageCount) {
