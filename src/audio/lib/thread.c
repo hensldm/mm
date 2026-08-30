@@ -145,9 +145,11 @@ AudioTask* AudioThread_UpdateImpl(void) {
         }
     }
 
+#if MM_VERSION >= N64_US
     if (gAudioSPDataPtr == (u64*)gAudioCtx.curAbiCmdBuf) {
         return (void*)-1;
     }
+#endif
 
     gAudioCtx.curAbiCmdBuf =
         AudioSynth_Update(gAudioCtx.curAbiCmdBuf, &numAbiCmds, curAiBuffer, gAudioCtx.numSamplesPerFrame[index]);
