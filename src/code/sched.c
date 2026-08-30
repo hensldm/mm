@@ -49,6 +49,7 @@ void Sched_SwapFramebufferImpl(CfbInfo* cfbInfo) {
 
         if ((SREG(62) == 0) && (cfbInfo->viMode != NULL)) {
             D_80096B20 = 1;
+            PRINTF("osViSetMode(%08x);\n", cfbInfo->viMode);
             osViSetMode(cfbInfo->viMode);
             osViSetSpecialFeatures(cfbInfo->viFeatures);
             osViSetXScale(cfbInfo->xScale);
@@ -77,6 +78,7 @@ void Sched_HandleNMI(Scheduler* sched) {
     ViConfig_UpdateVi(true);
 }
 
+#if MM_VERSION >= N64_US
 /**
  * Attempt to stop the RSP, if it is not already halted, by setting the halt bit in the
  * SP status register and waiting. Regardless of the result, the scheduler will send an
@@ -199,6 +201,7 @@ halt_rdp:
         }
     }
 }
+#endif
 
 /**
  * Enqueue a task to either the audio task list or the gfx task list
@@ -228,10 +231,18 @@ void Sched_QueueTask(Scheduler* sched, OSScTask* task) {
 void Sched_Yield(Scheduler* sched) {
     // Don't yield audio tasks
     if (sched->curRSPTask->list.t.type == M_AUDTASK) {
+#if MM_VERSION >= N64_US
         osSyncPrintf(
             T("まだ前回のオーディオタスクが完了していないのに新たなオーディオタスクがエントリされた\n",
               "A new audio task has been entered, even though the previous audio task has not yet been completed\n"));
-    } else if (!(sched->curRSPTask->state & OS_SC_YIELD)) {
+#else
+        (void)(T(
+            "まだ前回のオーディオタスクが完了していないのに新たなオーディオタスクがエントリされた\n",
+            "A new audio task has been entered, even though the previous audio task has not yet been completed\n"));
+#endif
+        return;
+    }
+    if (!(sched->curRSPTask->state & OS_SC_YIELD)) {
         sched->curRSPTask->state |= OS_SC_YIELD;
         osSpTaskYield();
     }
@@ -376,11 +387,13 @@ void Sched_RunTask(Scheduler* sched, OSScTask* spTask, OSScTask* dpTask) {
                 break;
         }
 
+#if MM_VERSION >= N64_US
         if (spTask->list.t.type == M_AUDTASK) {
             // Set global pointers to audio task data for use in audio processing
             gAudioSPDataPtr = spTask->list.t.data_ptr;
             gAudioSPDataSize = spTask->list.t.data_size;
         }
+#endif
 
         // Begin task execution
         osSpTaskStartGo(&spTask->list);
@@ -457,38 +470,44 @@ void Sched_HandleRSPDone(Scheduler* sched) {
     OSScTask* nextRSP = NULL;
     OSScTask* nextRDP = NULL;
     s32 state;
-    OSTime time;
 
+#if MM_VERSION >= N64_US
     if (sched->curRSPTask == NULL) {
         osSyncPrintf("__scHandleRSP:sc->curRSPTask == NULL\n");
         return;
     }
+#endif
 
-    // Log the time based on the type of task
-    time = osGetTime();
-    switch (sched->curRSPTask->list.t.type) {
-        case M_AUDTASK:
-            gRSPAudioTimeAcc += time - sRSPAudioStartTime;
-            break;
+    {
+        // Log the time based on the type of task
+        OSTime time = osGetTime();
 
-        case M_GFXTASK:
-            gRSPGfxTimeAcc += time - sRSPGFXStartTime;
-            break;
+        switch (sched->curRSPTask->list.t.type) {
+            case M_AUDTASK:
+                gRSPAudioTimeAcc += time - sRSPAudioStartTime;
+                break;
 
-        default:
-            if (1) {}
-            gRSPOtherTimeAcc += time - sRSPOtherStartTime;
-            break;
+            case M_GFXTASK:
+                gRSPGfxTimeAcc += time - sRSPGFXStartTime;
+                break;
+
+            default:
+                if (1) {}
+                gRSPOtherTimeAcc += time - sRSPOtherStartTime;
+                break;
+        }
     }
 
     curRSP = sched->curRSPTask;
     sched->curRSPTask = NULL;
 
+#if MM_VERSION >= N64_US
     if (curRSP->list.t.type == M_AUDTASK) {
         // Reset the global audio task data pointers
         gAudioSPDataPtr = NULL;
         gAudioSPDataSize = 0;
     }
+#endif
 
     if ((curRSP->state & OS_SC_YIELD) && osSpTaskYielded(&curRSP->list)) {
         // If the task was yielded, re-queue the task
@@ -520,10 +539,12 @@ void Sched_HandleRDPDone(Scheduler* sched) {
     OSScTask* nextRDP = NULL;
     s32 state;
 
+#if MM_VERSION >= N64_US
     if (sched->curRDPTask == NULL) {
         osSyncPrintf("__scHandleRDP:sc->curRDPTask == NULL\n");
         return;
     }
+#endif
 
     // Log run time
     gRDPTimeAcc = osGetTime() - sRDPStartTime;
@@ -553,6 +574,7 @@ void Sched_SendNotifyMsg(Scheduler* sched) {
     osSendMesg(&sched->interruptQueue, (OSMesg)NOTIFY_MSG, OS_MESG_BLOCK);
 }
 
+#if MM_VERSION >= N64_US
 /**
  * Sends a message to the scheduler to inform it that it should attempt
  * to stop the last dispatched audio task.
@@ -568,6 +590,7 @@ void Sched_SendAudioCancelMsg(Scheduler* sched) {
 void Sched_SendGfxCancelMsg(Scheduler* sched) {
     osSendMesg(&sched->interruptQueue, (OSMesg)RSP_GFX_CANCEL_MSG, OS_MESG_BLOCK);
 }
+#endif
 
 /**
  * Fault Client for the scheduler. Reports information about the state of the scheduler
@@ -585,13 +608,22 @@ void Sched_FaultClient(void* arg0, void* arg1) {
 
     spTask = sched->curRSPTask;
     if (spTask != NULL) {
+#if MM_VERSION >= N64_US
         FaultDrawer_Printf("RSPTask %08x %08x %02x %02x\n%01x %08x %08x\n", spTask, spTask->next, spTask->state,
                            spTask->flags, spTask->list.t.type, spTask->list.t.data_ptr, spTask->list.t.data_size);
+#else
+        FaultDrawer_Printf("RSPTask %08x %08x %01x %01x\n%01x %08x %08x\n", spTask, spTask->next, spTask->state,
+                           spTask->flags, spTask->list.t.type, spTask->list.t.data_ptr, spTask->list.t.data_size);
+#endif
     }
 
     dpTask = sched->curRDPTask;
     if (dpTask != NULL) {
+#if MM_VERSION >= N64_US
         FaultDrawer_Printf("RDPTask %08x %08x %02x %02x\n", dpTask, dpTask->next, dpTask->state, dpTask->flags);
+#else
+        FaultDrawer_Printf("RDPTask %08x %08x %01x %01x\n", dpTask, dpTask->next, dpTask->state, dpTask->flags);
+#endif
     }
 }
 
@@ -609,6 +641,7 @@ void Sched_ThreadEntry(void* arg) {
 
         // Check if it's a message from another thread or the OS
         switch (msg) {
+#if MM_VERSION >= N64_US
             case RDP_AUDIO_CANCEL_MSG:
                 Sched_HandleAudioCancel(sched);
                 continue;
@@ -616,6 +649,7 @@ void Sched_ThreadEntry(void* arg) {
             case RSP_GFX_CANCEL_MSG:
                 Sched_HandleGfxCancel(sched);
                 continue;
+#endif
 
             case NOTIFY_MSG:
                 Sched_HandleNotify(sched);
@@ -666,3 +700,55 @@ void Sched_Init(Scheduler* sched, void* stack, OSPri pri, u8 viModeType, UNK_TYP
     osCreateThread(&sched->thread, Z_THREAD_ID_SCHED, Sched_ThreadEntry, sched, stack, pri);
     osStartThread(&sched->thread);
 }
+
+#if MM_VERSION < N64_US
+/**
+ * Attempt to stop the RSP, if it is not already halted, by setting the halt bit in the
+ * SP status register and waiting. Regardless of the result, the scheduler will send an
+ * RSP_DONE_MSG back to itself and attempt to stop the RDP.
+ * If there was no currently running gfx task, it will dequeue the currently waiting gfx
+ * task and notify the sender if the task is associated with a message queue.
+ * If there is an RDP task, the output buffer will be cleared and the scheduler will send
+ * an RDP_DONE_MSG back to itself.
+ */
+s32 Sched_HandleGfxCancel(Scheduler* sched) {
+    s32 ret = 0;
+    s32 i;
+
+    if (sched->curRSPTask != NULL) {
+        if (!(IO_READ(SP_STATUS_REG) & SP_STATUS_HALT)) {
+            (void)(T("SP止めようとします\n", "Attempting to stop SP\n"));
+
+            IO_WRITE(SP_STATUS_REG, SP_SET_HALT);
+
+            i = 0;
+            while (!(IO_READ(SP_STATUS_REG) & SP_STATUS_HALT)) {
+                if (i++ > 100) {
+                    ret = 1;
+                    (void)(T("SP止まりませんでした(10msタイムアウト)\n", "SP did not stop (10ms timeout)\n"));
+                    goto send_mesg;
+                }
+                usleep(100);
+            }
+            (void)T("SP止まりました\n", "SP stopped\n");
+        } else {
+            (void)(T("SP止まっているようです\n", "SP seems to be stopped\n"));
+        }
+
+    send_mesg:
+        osSendMesg(&sched->interruptQueue, (OSMesg)RSP_DONE_MSG, OS_MESG_NOBLOCK);
+    }
+
+    if (sched->curRDPTask != NULL) {
+        OSTask_t* dpTask = &sched->curRDPTask->list.t;
+
+        (void)T("DP止めようとします\n", "Attempting to stop DP\n");
+        if (1) {}
+        bzero(dpTask->output_buff, (uintptr_t)dpTask->output_buff_size - (uintptr_t)dpTask->output_buff);
+
+        osSendMesg(&sched->interruptQueue, (OSMesg)RDP_DONE_MSG, OS_MESG_NOBLOCK);
+    }
+
+    return ret;
+}
+#endif
