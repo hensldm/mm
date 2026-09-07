@@ -60,8 +60,8 @@ void func_800F4A10(PlayState* play) {
             }
         }
 
-        if ((gSaveContext.save.saveInfo.playerData.owlActivationFlags >> 4) & 1) {
-            pauseCtx->cursorPoint[PAUSE_WORLD_MAP] = 4;
+        if ((gSaveContext.save.saveInfo.playerData.owlActivationFlags >> OWL_WARP_CLOCK_TOWN) & 1) {
+            pauseCtx->cursorPoint[PAUSE_WORLD_MAP] = OWL_WARP_CLOCK_TOWN;
         }
     }
 
