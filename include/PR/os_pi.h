@@ -58,7 +58,7 @@ typedef struct {
     /* 0x0C */ uintptr_t devAddr;
     /* 0x10 */ size_t size;
     /* 0x14 */ OSPiHandle* piHandle;
-} OSIoMesg; // size = 0x88
+} OSIoMesg; // size = 0x18
 
 typedef struct OSDevMgr {
     /* 0x00 */ s32 active;
