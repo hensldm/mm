@@ -1000,7 +1000,7 @@ void EnGoroiwa_Init(Actor* thisx, PlayState* play) {
             this->unk_1E0 = 0.0f;
         } else {
             this->unk_1E0 = (D_80942DFC[this->unk_1E4] * ((s32)play->state.framerateDivisor * 0.5f)) / temp_f0;
-            this->unk_1E0 *= 0.020000001f;
+            this->unk_1E0 *= 20.0f * 0.001f;
             if (this->unk_1E0 > 0.00037f) {
                 this->unk_1E0 = 0.00037f;
             } else if (this->unk_1E0 < 0.00015f) {
