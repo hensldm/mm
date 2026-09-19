@@ -39,7 +39,7 @@ s32 Object_SpawnPersistent(ObjectContext* objectCtx, s16 id) {
 void Object_InitContext(GameState* gameState, ObjectContext* objectCtx) {
     PlayState* play = (PlayState*)gameState;
     s32 pad;
-    u32 spaceSize;
+    size_t spaceSize;
     s32 i;
 
     if (play->sceneId == SCENE_CLOCKTOWER || play->sceneId == SCENE_TOWN || play->sceneId == SCENE_BACKTOWN ||
@@ -63,7 +63,7 @@ void Object_InitContext(GameState* gameState, ObjectContext* objectCtx) {
     // clang-format on
 
     objectCtx->spaceStart = objectCtx->slots[0].segment = THA_AllocTailAlign16(&gameState->tha, spaceSize);
-    objectCtx->spaceEnd = (void*)((u32)objectCtx->spaceStart + spaceSize);
+    objectCtx->spaceEnd = (void*)((uintptr_t)objectCtx->spaceStart + spaceSize);
     objectCtx->mainKeepSlot = Object_SpawnPersistent(objectCtx, GAMEPLAY_KEEP);
 
     gSegments[0x04] = OS_K0_TO_PHYSICAL(objectCtx->slots[objectCtx->mainKeepSlot].segment);
